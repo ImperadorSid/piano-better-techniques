@@ -1,0 +1,68 @@
+<% content_for :title, "#{@song.title} — Piano Learner" %>
+
+<div style="margin-bottom:16px;">
+  <%= link_to "← Back to Library", songs_path, style: "color:#888;text-decoration:none;" %>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:24px;">
+  <div>
+    <h1 style="margin:0 0 4px;"><%= @song.title %></h1>
+    <p style="color:#888;margin:0;"><%= @song.composer.presence || "Unknown composer" %></p>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span style="background:#2a2a5a;color:#7c7cff;padding:4px 12px;border-radius:12px;"><%= @song.difficulty_label %></span>
+    <%= link_to "Full Analysis", analyze_song_path(@song), style: "background:#2a2a5a;color:#7c7cff;padding:6px 14px;border-radius:6px;text-decoration:none;" %>
+    <%= link_to "Delete", song_path(@song), data: { turbo_method: :delete, turbo_confirm: "Delete this song?" }, style: "color:#ee5555;text-decoration:none;font-size:0.85rem;" %>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:32px;">
+  <div style="background:#111;border:1px solid #333;border-radius:6px;padding:16px;text-align:center;">
+    <div style="font-size:1.5rem;font-weight:bold;color:#7c7cff;"><%= @song.tempo_bpm %></div>
+    <div style="color:#888;font-size:0.85rem;">BPM</div>
+  </div>
+  <div style="background:#111;border:1px solid #333;border-radius:6px;padding:16px;text-align:center;">
+    <div style="font-size:1.5rem;font-weight:bold;color:#7c7cff;"><%= @song.key_signature %></div>
+    <div style="color:#888;font-size:0.85rem;">Key</div>
+  </div>
+  <div style="background:#111;border:1px solid #333;border-radius:6px;padding:16px;text-align:center;">
+    <div style="font-size:1.5rem;font-weight:bold;color:#7c7cff;"><%= @song.time_signature %></div>
+    <div style="color:#888;font-size:0.85rem;">Time</div>
+  </div>
+</div>
+
+<% if @song_analysis %>
+  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;margin-bottom:32px;">
+    <h3 style="margin:0 0 12px;color:#b0b0dd;">Chord Progression</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <% @song_analysis.chord_progressions.each do |chord| %>
+        <span style="background:#1a1a3a;border:1px solid #4444aa;color:#9999ff;padding:6px 14px;border-radius:20px;font-size:0.9rem;">
+          <%= chord["chord"] %><span style="color:#555;font-size:0.75rem;margin-left:4px;">beat <%= chord["beat"] %></span>
+        </span>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<h2 style="margin-bottom:16px;">Practice Parts</h2>
+
+<% if @song_parts.empty? %>
+  <p style="color:#888;">No practice parts available.</p>
+<% else %>
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <% @song_parts.each do |part| %>
+      <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h3 style="margin:0 0 4px;"><%= part.name %></h3>
+          <p style="color:#888;margin:0;font-size:0.9rem;">
+            <%= part.hand.capitalize %> hand · <%= part.note_count %> notes
+          </p>
+        </div>
+        <%= button_to "Start Practice",
+              song_part_practice_sessions_path(part),
+              method: :post,
+              style: "background:#2d5a2d;color:#90ee90;padding:10px 20px;border-radius:6px;border:none;cursor:pointer;font-size:0.95rem;" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,86 @@
+<% content_for :title, "Analysis — #{@song.title}" %>
+
+<div style="margin-bottom:16px;">
+  <%= link_to "← Back to Song", song_path(@song), style: "color:#888;text-decoration:none;" %>
+</div>
+
+<h1 style="margin-bottom:4px;"><%= @song.title %> — Analysis</h1>
+<p style="color:#888;margin:0 0 32px;"><%= @song.composer.presence || "Unknown composer" %></p>
+
+<% if @song_analysis.nil? %>
+  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:40px;text-align:center;color:#888;">
+    <p>No analysis available for this song yet.</p>
+    <p>Import a MIDI file to generate analysis automatically.</p>
+  </div>
+<% else %>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;">
+
+    <%# Chord Progression %>
+    <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;">
+      <h3 style="margin:0 0 16px;color:#b0b0dd;">Chord Progression</h3>
+      <% if @song_analysis.chord_progressions.any? %>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <% @song_analysis.chord_progressions.each do |chord| %>
+            <div style="background:#1a1a3a;border:1px solid #4444aa;border-radius:6px;padding:10px 14px;text-align:center;">
+              <div style="color:#9999ff;font-size:1.1rem;font-weight:bold;"><%= chord["chord"] %></div>
+              <div style="color:#555;font-size:0.75rem;">Beat <%= chord["beat"] %></div>
+              <div style="color:#777;font-size:0.75rem;"><%= chord["quality"] %></div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p style="color:#666;">No chord data available.</p>
+      <% end %>
+    </div>
+
+    <%# Difficulty Sections %>
+    <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;">
+      <h3 style="margin:0 0 16px;color:#b0b0dd;">Difficulty Sections</h3>
+      <% if @song_analysis.difficulty_sections.any? %>
+        <% colors = ["#2d5a2d", "#5a5a2d", "#5a3a2d", "#5a2d2d", "#4a1a4a"] %>
+        <% @song_analysis.difficulty_sections.each do |section| %>
+          <% level = section["level"].to_i %>
+          <div style="background:<%= colors[level - 1] || "#333" %>;border-radius:6px;padding:10px 14px;margin-bottom:8px;">
+            <div style="color:#eee;font-weight:bold;"><%= section["label"] %></div>
+            <div style="color:#aaa;font-size:0.85rem;">
+              Beats <%= section["start_beat"] %> – <%= section["end_beat"] %> · Level <%= level %>/5
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <p style="color:#666;">No section data available.</p>
+      <% end %>
+    </div>
+
+  </div>
+
+  <%# Dynamics %>
+  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;margin-bottom:24px;">
+    <h3 style="margin:0 0 16px;color:#b0b0dd;">Dynamics Map</h3>
+    <% if @song_analysis.dynamics_map.any? %>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <% @song_analysis.dynamics_map.each do |dyn| %>
+          <span style="background:#1a2a1a;border:1px solid #335533;color:#aaeaaa;padding:6px 12px;border-radius:4px;font-size:0.9rem;">
+            <strong><%= dyn["marking"] %></strong>
+            <span style="color:#666;font-size:0.8rem;margin-left:6px;">beat <%= dyn["beat"] %> · vel <%= dyn["velocity_avg"] %></span>
+          </span>
+        <% end %>
+      </div>
+    <% else %>
+      <p style="color:#666;">No dynamics data available.</p>
+    <% end %>
+  </div>
+
+  <%# Hand Separation %>
+  <% if @song_analysis.hand_separation.any? %>
+    <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;">
+      <h3 style="margin:0 0 12px;color:#b0b0dd;">Hand Separation</h3>
+      <p style="color:#888;margin:0;">
+        Split point: MIDI <%= @song_analysis.hand_separation["split_midi"] %>
+        (<%= @song_analysis.hand_separation["method"]&.humanize %>)
+      </p>
+    </div>
+  <% end %>
+
+<% end %>

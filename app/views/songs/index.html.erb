@@ -1,0 +1,37 @@
+<% content_for :title, "Song Library — Piano Learner" %>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+  <h1 style="margin:0;">Song Library</h1>
+  <%= link_to "Import Song", import_songs_path, style: "background:#5555ff;color:white;padding:8px 16px;border-radius:6px;text-decoration:none;" %>
+</div>
+
+<% if @songs.empty? %>
+  <div style="text-align:center;padding:60px;color:#888;">
+    <p style="font-size:1.5rem;">No songs yet.</p>
+    <p>Import a MIDI file or seed the database to get started.</p>
+    <%= link_to "Import a Song", import_songs_path, style: "color:#7c7cff;" %>
+  </div>
+<% else %>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+    <% @songs.each do |song| %>
+      <div style="border:1px solid #333;border-radius:8px;padding:20px;background:#111;">
+        <div style="display:flex;justify-content:space-between;align-items:start;">
+          <h3 style="margin:0 0 4px;">
+            <%= link_to song.title, song_path(song), style: "color:#e0e0ff;text-decoration:none;" %>
+          </h3>
+          <span style="background:#2a2a5a;color:#7c7cff;padding:2px 8px;border-radius:12px;font-size:0.8rem;">
+            <%= song.difficulty_label %>
+          </span>
+        </div>
+        <p style="color:#888;margin:4px 0 12px;font-size:0.9rem;"><%= song.composer.presence || "Unknown composer" %></p>
+        <div style="color:#666;font-size:0.85rem;margin-bottom:12px;">
+          <%= song.tempo_bpm %> BPM · <%= song.key_signature %> · <%= song.time_signature %>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <%= link_to "Practice", song_path(song), style: "background:#2d5a2d;color:#90ee90;padding:6px 12px;border-radius:4px;text-decoration:none;font-size:0.9rem;" %>
+          <%= link_to "Analysis", analyze_song_path(song), style: "background:#2a2a5a;color:#7c7cff;padding:6px 12px;border-radius:4px;text-decoration:none;font-size:0.9rem;" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
