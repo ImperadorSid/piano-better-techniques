@@ -1,0 +1,61 @@
+<% content_for :title, "Practice — #{@song_part.song.title}" %>
+
+<div style="margin-bottom:16px;">
+  <%= link_to "← Back to Song", song_path(@song_part.song), style: "color:#888;text-decoration:none;" %>
+</div>
+
+<h2 style="margin-bottom:4px;"><%= @song_part.song.title %></h2>
+<p style="color:#888;margin:0 0 24px;"><%= @song_part.name %> · <%= @song_part.note_count %> notes</p>
+
+<div data-controller="midi keyboard practice"
+     data-practice-notes-value="<%= @song_part.notes.to_json %>"
+     data-practice-session-id-value="<%= @session.id %>"
+     data-practice-song-part-id-value="<%= @song_part.id %>"
+     data-practice-keyboard-outlet=".keyboard-wrapper">
+
+  <%# Note display panel %>
+  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:32px;text-align:center;margin-bottom:24px;">
+    <div data-practice-target="statusPanel">
+      <p style="color:#888;margin:0 0 8px;font-size:0.9rem;">Click Start to begin</p>
+      <div style="font-size:3rem;color:#7c7cff;" data-practice-target="noteDisplay">🎹</div>
+      <p style="color:#888;margin:8px 0 0;font-size:0.85rem;" data-practice-target="noteLabel">—</p>
+    </div>
+
+    <div style="margin-top:20px;">
+      <button data-action="click->practice#start"
+              data-practice-target="startButton"
+              style="background:#5555ff;color:white;padding:12px 32px;border-radius:8px;border:none;cursor:pointer;font-size:1rem;">
+        Start Practice
+      </button>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div style="background:#222;border-radius:4px;height:8px;overflow:hidden;">
+        <div data-practice-target="progressBar"
+             style="background:#5555ff;height:100%;width:0%;transition:width 0.2s;"></div>
+      </div>
+      <p style="color:#666;font-size:0.8rem;margin:6px 0 0;" data-practice-target="progressText">
+        0 / <%= @song_part.note_count %> notes
+      </p>
+    </div>
+  </div>
+
+  <%# Virtual keyboard %>
+  <div class="keyboard-wrapper" data-controller="keyboard" style="margin-bottom:24px;"></div>
+
+  <%# MIDI status %>
+  <div style="text-align:center;margin-bottom:16px;">
+    <span data-midi-target="status" style="color:#888;font-size:0.85rem;">MIDI: Not connected</span>
+  </div>
+
+  <%# Session complete Turbo Frame %>
+  <turbo-frame id="session_complete"></turbo-frame>
+
+  <%# Score panel (hidden until complete) %>
+  <div data-practice-target="scorePanel" style="display:none;background:#111;border:1px solid #333;border-radius:8px;padding:24px;text-align:center;">
+    <h3 style="color:#90ee90;">Session Complete!</h3>
+    <div style="font-size:2rem;color:#7c7cff;font-weight:bold;" data-practice-target="accuracyDisplay">—</div>
+    <p style="color:#888;">Accuracy</p>
+    <%= link_to "Practice Again", song_path(@song_part.song), style: "background:#2d5a2d;color:#90ee90;padding:10px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:12px;" %>
+  </div>
+</div>

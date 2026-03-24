@@ -1,0 +1,12 @@
+<div style="background:#111;border:1px solid #2d5a2d;border-radius:8px;padding:32px;text-align:center;margin-top:24px;">
+  <h3 style="color:#90ee90;margin:0 0 8px;">Session Complete!</h3>
+  <div style="font-size:3rem;font-weight:bold;color:#7c7cff;margin:16px 0;">
+    <%= session.accuracy_pct.to_f.round(1) %>%
+  </div>
+  <p style="color:#888;">Accuracy</p>
+  <p style="color:#888;">
+    <%= session.correct_notes %> correct · <%= session.incorrect_notes %> incorrect ·
+    <%= session.notes_reached %> / <%= session.total_notes %> notes reached
+  </p>
+  <%= link_to "Practice Again", song_path(session.song), style: "background:#5555ff;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:12px;" %>
+</div>

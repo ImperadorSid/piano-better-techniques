@@ -1,0 +1,46 @@
+<% content_for :title, "Practice History — Piano Learner" %>
+
+<h1 style="margin-bottom:24px;">Practice History</h1>
+
+<% if @sessions.empty? %>
+  <div style="text-align:center;padding:60px;color:#888;">
+    <p>No practice sessions yet.</p>
+    <%= link_to "Start Practicing", songs_path, style: "color:#7c7cff;" %>
+  </div>
+<% else %>
+  <table style="width:100%;border-collapse:collapse;">
+    <thead>
+      <tr style="color:#888;font-size:0.85rem;text-align:left;border-bottom:1px solid #333;">
+        <th style="padding:8px 12px;">Song</th>
+        <th style="padding:8px 12px;">Part</th>
+        <th style="padding:8px 12px;">Date</th>
+        <th style="padding:8px 12px;">Notes</th>
+        <th style="padding:8px 12px;">Accuracy</th>
+        <th style="padding:8px 12px;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @sessions.each do |session| %>
+        <tr style="border-bottom:1px solid #222;">
+          <td style="padding:12px;color:#e0e0ff;"><%= session.song.title %></td>
+          <td style="padding:12px;color:#888;"><%= session.song_part.name %></td>
+          <td style="padding:12px;color:#666;font-size:0.85rem;"><%= session.created_at.strftime("%b %d, %Y %H:%M") %></td>
+          <td style="padding:12px;color:#888;"><%= session.notes_reached %> / <%= session.total_notes %></td>
+          <td style="padding:12px;">
+            <% acc = session.accuracy_pct.to_f %>
+            <span style="color:<%= acc >= 80 ? '#90ee90' : acc >= 50 ? '#eeee90' : '#ee9090' %>">
+              <%= session.completed ? "#{acc.round(1)}%" : "—" %>
+            </span>
+          </td>
+          <td style="padding:12px;">
+            <% if session.completed %>
+              <span style="color:#90ee90;font-size:0.85rem;">✓ Done</span>
+            <% else %>
+              <span style="color:#888;font-size:0.85rem;">In progress</span>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
