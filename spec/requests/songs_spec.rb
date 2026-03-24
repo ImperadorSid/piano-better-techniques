@@ -35,26 +35,6 @@ RSpec.describe "Songs", type: :request do
     end
   end
 
-  describe "GET /songs/import" do
-    it "returns http success" do
-      get import_songs_path
-      expect(response).to have_http_status(:success)
-    end
-  end
-
-  describe "POST /songs/import" do
-    it "creates a song and enqueues an import job" do
-      expect {
-        post import_songs_path, params: { title: "New Song", source_url: "http://example.com" }
-      }.to change(Song, :count).by(1)
-    end
-
-    it "redirects to the song page" do
-      post import_songs_path, params: { title: "New Song", source_url: "http://example.com" }
-      expect(response).to redirect_to(Song.last)
-    end
-  end
-
   describe "DELETE /songs/:id" do
     it "deletes the song and redirects" do
       expect {

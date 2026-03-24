@@ -1,15 +1,13 @@
 <% content_for :title, "Song Library — Piano Learner" %>
 
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+<div style="margin-bottom:24px;">
   <h1 style="margin:0;">Song Library</h1>
-  <%= link_to "Import Song", import_songs_path, style: "background:#5555ff;color:white;padding:8px 16px;border-radius:6px;text-decoration:none;" %>
 </div>
 
 <% if @songs.empty? %>
   <div style="text-align:center;padding:60px;color:#888;">
     <p style="font-size:1.5rem;">No songs yet.</p>
-    <p>Import a MIDI file or seed the database to get started.</p>
-    <%= link_to "Import a Song", import_songs_path, style: "color:#7c7cff;" %>
+    <p>Run <code>rails db:seed</code> to load the starter songs.</p>
   </div>
 <% else %>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">

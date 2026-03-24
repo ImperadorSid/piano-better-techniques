@@ -5,10 +5,6 @@ Rails.application.routes.draw do
 
   resources :songs, only: [ :index, :show, :destroy ] do
     member { get :analyze }
-    collection do
-      get  :import
-      post :import
-    end
   end
 
   resources :song_parts, only: [] do
