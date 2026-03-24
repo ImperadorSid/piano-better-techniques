@@ -1,0 +1,38 @@
+<% content_for :title, "MIDI Setup — Piano Learner" %>
+
+<h1 style="margin-bottom:8px;">MIDI Device Setup</h1>
+<p style="color:#888;margin-bottom:32px;">Test your digital piano connection before practicing.</p>
+
+<div style="max-width:700px;">
+  <div data-controller="midi"
+       style="background:#111;border:1px solid #333;border-radius:8px;padding:32px;margin-bottom:24px;">
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <div style="width:12px;height:12px;border-radius:50%;background:#555;" data-midi-target="statusDot" id="midiStatusDot"></div>
+      <span data-midi-target="status" style="color:#888;">Connecting to MIDI devices...</span>
+    </div>
+
+    <div data-midi-target="deviceList" style="margin-bottom:24px;">
+      <p style="color:#666;font-size:0.9rem;">No MIDI devices found.</p>
+    </div>
+
+    <div style="background:#0a0a1a;border:1px solid #222;border-radius:6px;padding:20px;">
+      <h4 style="color:#b0b0dd;margin:0 0 12px;">Live Input</h4>
+      <p style="color:#666;font-size:0.85rem;margin:0 0 12px;">Press keys on your piano to test the connection:</p>
+      <div data-midi-target="lastNote"
+           style="font-size:2rem;color:#7c7cff;text-align:center;padding:20px;min-height:70px;">
+        —
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:24px;">
+    <h3 style="color:#b0b0dd;margin:0 0 12px;">Troubleshooting</h3>
+    <ul style="color:#888;line-height:2;margin:0;padding-left:20px;">
+      <li>Connect your piano via USB before loading this page</li>
+      <li>Use Chrome or Edge (Firefox has limited WebMIDI support)</li>
+      <li>Click "Allow" when the browser requests MIDI access</li>
+      <li>Try disconnecting and reconnecting the USB cable</li>
+    </ul>
+  </div>
+</div>
