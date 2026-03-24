@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Piano App" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Piano App">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <nav style="background:#1a1a2e;padding:12px 24px;display:flex;align-items:center;gap:24px;">
+      <%= link_to "🎹 Piano Learner", root_path, style: "color:#e0e0ff;font-weight:bold;text-decoration:none;font-size:1.2rem;" %>
+      <%= link_to "Library", songs_path, style: "color:#b0b0dd;text-decoration:none;" %>
+      <%= link_to "History", practice_sessions_path, style: "color:#b0b0dd;text-decoration:none;" %>
+      <%= link_to "Dashboard", dashboard_path, style: "color:#b0b0dd;text-decoration:none;" %>
+      <%= link_to "MIDI Setup", midi_setup_path, style: "color:#b0b0dd;text-decoration:none;" %>
+      <%= link_to "+ Import Song", import_songs_path, style: "color:#7c7cff;text-decoration:none;margin-left:auto;" %>
+    </nav>
+
+    <% if notice %>
+      <div style="background:#2d5a2d;color:#90ee90;padding:10px 24px;"><%= notice %></div>
+    <% end %>
+    <% if alert %>
+      <div style="background:#5a2d2d;color:#ee9090;padding:10px 24px;"><%= alert %></div>
+    <% end %>
+
+    <main style="padding:24px;max-width:1100px;margin:0 auto;">
+      <%= yield %>
+    </main>
+  </body>
+</html>
