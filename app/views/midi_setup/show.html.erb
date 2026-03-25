@@ -20,8 +20,19 @@
       <h4 style="color:#b0b0dd;margin:0 0 12px;">Live Input</h4>
       <p style="color:#666;font-size:0.85rem;margin:0 0 12px;">Press keys on your piano to test the connection:</p>
       <div data-midi-target="lastNote"
-           style="font-size:2rem;color:#7c7cff;text-align:center;padding:20px;min-height:70px;">
+           style="font-size:2rem;color:#7c7cff;text-align:center;padding:20px 20px 8px;min-height:70px;">
         —
+      </div>
+      <div style="padding:0 20px 20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <span style="color:#555;font-size:0.8rem;">Velocity</span>
+          <span data-midi-target="velocity" style="color:#b0b0dd;font-size:0.85rem;font-weight:600;">—</span>
+        </div>
+        <div style="height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;">
+          <div data-midi-target="velocityBar"
+               style="height:100%;width:0%;background:linear-gradient(90deg,#4444aa,#7c7cff);border-radius:3px;transition:width 0.1s;">
+          </div>
+        </div>
       </div>
     </div>
   </div>

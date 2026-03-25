@@ -6,7 +6,7 @@ import { midiToName } from "utils/midi_notes"
 //   midi:noteon  { detail: { midi, velocity, name } }
 //   midi:noteoff { detail: { midi } }
 export default class extends Controller {
-  static targets = ["status", "statusDot", "deviceList", "lastNote"]
+  static targets = ["status", "statusDot", "deviceList", "lastNote", "velocity", "velocityBar"]
 
   connect() {
     this.requestMidiAccess()
@@ -61,6 +61,12 @@ export default class extends Controller {
       const name = midiToName(note)
       if (this.hasLastNoteTarget) {
         this.lastNoteTarget.textContent = `${name} (MIDI ${note})`
+      }
+      if (this.hasVelocityTarget) {
+        this.velocityTarget.textContent = velocity
+      }
+      if (this.hasVelocityBarTarget) {
+        this.velocityBarTarget.style.width = `${Math.round((velocity / 127) * 100)}%`
       }
       this.dispatch("noteon", {
         detail: { midi: note, velocity, name },

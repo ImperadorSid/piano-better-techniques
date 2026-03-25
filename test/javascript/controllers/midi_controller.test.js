@@ -54,6 +54,24 @@ describe("MidiController message parsing", () => {
   })
 })
 
+describe("MidiController velocity bar calculation", () => {
+  function velocityBarWidth(velocity) {
+    return Math.round((velocity / 127) * 100)
+  }
+
+  it("maps velocity 127 to 100%", () => {
+    expect(velocityBarWidth(127)).toBe(100)
+  })
+
+  it("maps velocity 0 to 0%", () => {
+    expect(velocityBarWidth(0)).toBe(0)
+  })
+
+  it("maps velocity 64 to ~50%", () => {
+    expect(velocityBarWidth(64)).toBe(50)
+  })
+})
+
 describe("MidiController WebMIDI availability check", () => {
   it("detects when WebMIDI is not available", () => {
     const supported = "requestMIDIAccess" in navigator
