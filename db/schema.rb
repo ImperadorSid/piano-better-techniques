@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_24_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_25_000001) do
   create_table "practice_sessions", force: :cascade do |t|
     t.float "accuracy_pct"
     t.boolean "completed"
@@ -46,6 +46,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_24_000001) do
     t.text "ai_harmony"
     t.text "ai_overview"
     t.text "ai_song_map"
+    t.string "ai_status"
     t.json "chord_progressions"
     t.datetime "created_at", null: false
     t.json "difficulty_sections"

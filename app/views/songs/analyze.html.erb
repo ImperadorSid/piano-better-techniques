@@ -14,46 +14,10 @@
 <% else %>
 
   <%# ── AI-Generated Overview ─────────────────────────────────────────────── %>
-  <% if @song_analysis.ai_generated? %>
-
-    <section style="margin-bottom:32px;">
-      <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Overview</h2>
-      <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-        <%= @song_analysis.ai_overview %>
-      </div>
-    </section>
-
-    <section style="margin-bottom:32px;">
-      <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Song Map</h2>
-      <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-        <%= @song_analysis.ai_song_map %>
-      </div>
-    </section>
-
-    <section style="margin-bottom:32px;">
-      <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Hand Positioning</h2>
-      <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-        <%= @song_analysis.ai_hand_positions %>
-      </div>
-    </section>
-
-    <section style="margin-bottom:32px;">
-      <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Difficult Sections</h2>
-      <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-        <%= @song_analysis.ai_difficult_sections %>
-      </div>
-    </section>
-
-    <section style="margin-bottom:32px;">
-      <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Harmony &amp; Dynamics</h2>
-      <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-        <%= @song_analysis.ai_harmony %>
-      </div>
-    </section>
-
-    <hr style="border-color:#222;margin-bottom:32px;">
-
-  <% end %>
+  <%= turbo_stream_from "song_overview_#{@song.id}" %>
+  <div id="ai_overview">
+    <%= render "ai_overview", song_analysis: @song_analysis %>
+  </div>
 
   <%# ── Structured Data ────────────────────────────────────────────────────── %>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;">

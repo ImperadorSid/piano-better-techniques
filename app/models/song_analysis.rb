@@ -20,4 +20,12 @@ class SongAnalysis < ApplicationRecord
   def ai_generated?
     ai_overview.present?
   end
+
+  def ai_pending?
+    ai_status == "pending"
+  end
+
+  def ai_failed?
+    ai_status == "failed"
+  end
 end

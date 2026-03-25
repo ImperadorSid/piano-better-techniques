@@ -12,9 +12,9 @@ class SongsController < ApplicationController
 
   def analyze
     @song_analysis = @song.song_analysis
-    if @song_analysis && !@song_analysis.ai_generated?
-      AI::SongOverviewGenerator.new(@song).generate!
-      @song_analysis.reload
+    if @song_analysis && !@song_analysis.ai_generated? && !@song_analysis.ai_pending? && !@song_analysis.ai_failed?
+      @song_analysis.update!(ai_status: "pending")
+      SongOverviewJob.perform_later(@song.id)
     end
   end
 

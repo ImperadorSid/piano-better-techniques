@@ -38,6 +38,12 @@ RSpec.describe AI::SongOverviewGenerator do
         allow_any_instance_of(Faraday::Connection).to receive(:post).and_return(successful_response)
       end
 
+      it "clears ai_status" do
+        song.song_analysis.update!(ai_status: "pending")
+        generator.generate!
+        expect(song.song_analysis.reload.ai_status).to be_nil
+      end
+
       it "populates ai_overview on the song's analysis" do
         generator.generate!
         expect(song.song_analysis.reload.ai_overview).to eq("Twinkle is a classic beginner piece.")
