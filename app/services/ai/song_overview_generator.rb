@@ -26,7 +26,8 @@ module AI
         ai_song_map:           parsed["song_map"],
         ai_hand_positions:     parsed["hand_positions"],
         ai_difficult_sections: parsed["difficult_sections"],
-        ai_harmony:            parsed["harmony"]
+        ai_harmony:            parsed["harmony"],
+        ai_status:             nil
       )
     end
 
@@ -68,14 +69,16 @@ module AI
         Dynamics: #{dynamics.presence || "No dynamics data"}
         Hand split point: MIDI note #{analysis.hand_separation["split_midi"].presence || "N/A"}
 
+        Write in a warm, direct, encouraging tone — like a patient teacher sitting next to the student. Address the student as "you". Use plain everyday language: avoid music jargon, and when you must use a musical term, explain it immediately in simple words. Give concrete, specific advice (exact fingers, exact BPM numbers, names for practice drills). Acknowledge where things feel hard and explain why, then give a clear way through it.
+
         Respond with ONLY a valid JSON object (no markdown, no extra text) with exactly these five keys:
 
         {
-          "overview": "2 paragraphs introducing the song to a beginner: what the song feels like and its general mood, and a simple note about the speed and how many beats are in each measure.",
-          "song_map": "2 paragraphs describing the chord sections in order. Keep it simple: mention which chords repeat, where the song changes, and what to expect when playing through it.",
-          "hand_positions": "2 paragraphs: one for the left hand and one for the right hand. Describe where each hand sits on the keyboard and what it plays, using simple everyday language.",
-          "difficult_sections": "2 paragraphs covering the hardest parts of the song. Describe what makes each part tricky in plain terms (e.g., moving fingers quickly, reaching far keys) and give one simple practice tip for each.",
-          "harmony": "2 paragraphs explaining how the chords sound together and what feeling they create. Mention when to play louder or softer and why it makes the song more expressive."
+          "overview": "2 paragraphs. First: introduce the song's emotional character and mood — what it feels like to play and what makes it satisfying for a beginner. Second: explain the key and tempo in practical terms (e.g. 'the key of C major means you will be working mostly with the white keys') and what the time signature means for how you count while playing.",
+          "song_map": "2 paragraphs acting as a roadmap through the song. First: walk through the chord sections in order — name each section, describe which chords appear and whether they repeat, and tell the student what to expect moment to moment. Second: point out the single biggest structural thing to notice (e.g. a repeating pattern, a turnaround, a section that comes back) and explain why recognising it makes the whole song easier to remember and play.",
+          "hand_positions": "2 paragraphs. First: describe exactly where the left hand sits on the keyboard, what it plays (e.g. bass notes, chords, arpeggios), and give one named practice drill to build that hand's independence — include a target BPM and a clear goal. Second: do the same for the right hand — where it sits, what it plays, and one named practice drill. End with one sentence about the key coordination tip for bringing the two hands together.",
+          "difficult_sections": "2 paragraphs, each covering one hard section from the difficulty data. For each: name the section and describe in plain words exactly what makes it tricky (e.g. 'your fingers need to jump quickly from one position to another'). Then give a specific, named practice method with a concrete starting BPM and a clear milestone to hit before moving on.",
+          "harmony": "2 paragraphs. First: explain what each chord in the progression is doing emotionally — describe each one in one short phrase (e.g. 'home and settled', 'a little uncertain', 'the emotional peak') so the student understands the story the chords are telling. Second: give practical dynamics guidance tied to the song's sections — describe when to play softer and when to play louder, and explain in plain terms why that contrast makes the music come alive."
         }
       PROMPT
     end
