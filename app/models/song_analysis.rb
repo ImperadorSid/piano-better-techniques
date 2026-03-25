@@ -16,4 +16,8 @@ class SongAnalysis < ApplicationRecord
   def hand_separation
     super || {}
   end
+
+  def ai_generated?
+    ai_overview.present?
+  end
 end
