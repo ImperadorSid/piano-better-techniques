@@ -3,6 +3,7 @@ import { isBlackKey } from "utils/midi_notes"
 
 // Renders a virtual piano keyboard (C3–B5 range, 3 octaves).
 // Exposes highlight() and flash() methods consumed via Stimulus Outlets.
+// Listens to midi:noteon / midi:noteoff on document to show pressed keys (amber).
 export default class extends Controller {
   // MIDI range to display
   static rangeStart = 48  // C3
@@ -11,6 +12,15 @@ export default class extends Controller {
   connect() {
     this.keys = {}  // midi → element
     this.render()
+    this.boundPress   = (e) => this.press(e.detail.midi)
+    this.boundRelease = (e) => this.release(e.detail.midi)
+    document.addEventListener("midi:noteon",  this.boundPress)
+    document.addEventListener("midi:noteoff", this.boundRelease)
+  }
+
+  disconnect() {
+    document.removeEventListener("midi:noteon",  this.boundPress)
+    document.removeEventListener("midi:noteoff", this.boundRelease)
   }
 
   render() {
@@ -95,7 +105,9 @@ export default class extends Controller {
 
     key.style.background = color
     setTimeout(() => {
-      if (key.dataset.highlighted === "true") {
+      if (key.dataset.pressed === "true") {
+        key.style.background = isBlackKey(midi) ? "#b87a00" : "#ffc247"
+      } else if (key.dataset.highlighted === "true") {
         key.style.background = isBlackKey(midi) ? "#2244aa" : "#aabbff"
       } else {
         key.style.background = isBlackKey(midi) ? "#222" : "white"
@@ -106,7 +118,29 @@ export default class extends Controller {
   clearHighlight() {
     Object.entries(this.keys).forEach(([midi, key]) => {
       delete key.dataset.highlighted
-      key.style.background = isBlackKey(Number(midi)) ? "#222" : "white"
+      if (key.dataset.pressed !== "true") {
+        key.style.background = isBlackKey(Number(midi)) ? "#222" : "white"
+      }
     })
+  }
+
+  // Color a key amber while it is physically held down on the real piano
+  press(midi) {
+    const key = this.keys[midi]
+    if (!key) return
+    key.dataset.pressed = "true"
+    key.style.background = isBlackKey(midi) ? "#b87a00" : "#ffc247"
+  }
+
+  // Restore a key to its resting state when released
+  release(midi) {
+    const key = this.keys[midi]
+    if (!key) return
+    delete key.dataset.pressed
+    if (key.dataset.highlighted === "true") {
+      key.style.background = isBlackKey(midi) ? "#2244aa" : "#aabbff"
+    } else {
+      key.style.background = isBlackKey(midi) ? "#222" : "white"
+    }
   }
 }

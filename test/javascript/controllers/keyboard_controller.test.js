@@ -79,6 +79,37 @@ describe("KeyboardController", () => {
     })
   })
 
+  describe("press() / release()", () => {
+    it("sets dataset.pressed and changes background to amber", () => {
+      const key = element.querySelector("[data-midi='60']")
+      controller.press(60)
+      expect(key.dataset.pressed).toBe("true")
+      expect(key.style.background).toBe("rgb(255, 194, 71)")
+    })
+
+    it("removes dataset.pressed and restores default color on release", () => {
+      controller.press(60)
+      controller.release(60)
+      const key = element.querySelector("[data-midi='60']")
+      expect(key.dataset.pressed).toBeUndefined()
+      expect(key.style.background).toBe("white")
+    })
+
+    it("restores to highlighted (blue) on release if key was highlighted", () => {
+      controller.highlight(60)
+      controller.press(60)
+      controller.release(60)
+      const key = element.querySelector("[data-midi='60']")
+      expect(key.dataset.highlighted).toBe("true")
+      expect(key.style.background).not.toBe("white")
+    })
+
+    it("does not throw for a MIDI note outside the rendered range", () => {
+      expect(() => controller.press(21)).not.toThrow()
+      expect(() => controller.release(21)).not.toThrow()
+    })
+  })
+
   describe("flash()", () => {
     it("temporarily changes key color on correct note", () => {
       const key = element.querySelector("[data-midi='60']")
