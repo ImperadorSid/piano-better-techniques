@@ -4,7 +4,12 @@
   <%= link_to "← Back to Song", song_path(@song), style: "color:#888;text-decoration:none;" %>
 </div>
 
-<h1 style="margin-bottom:4px;"><%= @song.title %> — Analysis</h1>
+<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
+  <h1 style="margin:0;"><%= @song.title %> — Analysis</h1>
+  <% if @song_analysis && @song_analysis.ai_generated? %>
+    <%= button_to "Regenerate Analysis", regenerate_song_path(@song), method: :post, style: "background:#2a2a5a;color:#7c7cff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:0.9rem;white-space:nowrap;" %>
+  <% end %>
+</div>
 <p style="color:#888;margin:0 0 32px;"><%= @song.composer.presence || "Unknown composer" %></p>
 
 <% if @song_analysis.nil? %>

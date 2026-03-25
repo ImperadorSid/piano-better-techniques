@@ -4,7 +4,10 @@ Rails.application.routes.draw do
   root "songs#index"
 
   resources :songs, only: [ :index, :show, :destroy ] do
-    member { get :analyze }
+    member do
+      get :analyze
+      post :regenerate
+    end
   end
 
   resources :song_parts, only: [] do
