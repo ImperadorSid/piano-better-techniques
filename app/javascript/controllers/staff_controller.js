@@ -47,7 +47,7 @@ export default class extends Controller {
     renderer.resize(width, height)
     const context = renderer.getContext()
 
-    const stave = new Stave(10, 20, width - 20)
+    const stave = new Stave(0, 20, width)
     stave.addClef("treble")
     stave.setContext(context).draw()
 
