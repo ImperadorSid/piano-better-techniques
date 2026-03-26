@@ -7,7 +7,7 @@
 <h2 style="margin-bottom:4px;"><%= @song_part.song.title %></h2>
 <p style="color:#888;margin:0 0 24px;"><%= @song_part.name %> · <%= @song_part.note_count %> notes</p>
 
-<div data-controller="midi keyboard practice"
+<div data-controller="midi practice"
      data-practice-notes-value="<%= @song_part.notes.to_json %>"
      data-practice-session-id-value="<%= @session.id %>"
      data-practice-song-part-id-value="<%= @song_part.id %>"
@@ -37,6 +37,7 @@
       <p style="color:#666;font-size:0.8rem;margin:6px 0 0;" data-practice-target="progressText">
         0 / <%= @song_part.note_count %> notes
       </p>
+      <p style="color:#7c7cff;font-size:0.85rem;margin:8px 0 0;font-weight:bold;" data-practice-target="streakDisplay"></p>
     </div>
   </div>
 

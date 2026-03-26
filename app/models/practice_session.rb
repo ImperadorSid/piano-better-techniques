@@ -19,15 +19,28 @@ class PracticeSession < ApplicationRecord
       notes_reached: notes_reached || self.notes_reached,
       accuracy_pct: pct
     )
+    Scoring::SessionScorer.new(self).calculate!
   end
 
-  def record_attempt!(note_position:, expected_midi:, played_midi:, correct:, response_ms: nil)
+  def score_breakdown
+    {
+      accuracy: accuracy_pct,
+      timing: timing_score,
+      streak: streak_score,
+      velocity: velocity_score,
+      composite: composite_score
+    }
+  end
+
+  def record_attempt!(note_position:, expected_midi:, played_midi:, correct:, response_ms: nil, played_velocity: nil, expected_velocity: nil)
     session_attempts.create!(
       note_position: note_position,
       expected_midi: expected_midi,
       played_midi: played_midi,
       correct: correct,
-      response_ms: response_ms
+      response_ms: response_ms,
+      played_velocity: played_velocity,
+      expected_velocity: expected_velocity
     )
     if correct
       increment!(:correct_notes)

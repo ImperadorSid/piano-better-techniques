@@ -28,6 +28,22 @@ RSpec.describe PracticeSession, type: :model do
       session.complete!
       expect(session.reload.ended_at).not_to be_nil
     end
+
+    it "runs the scorer and populates composite_score" do
+      session.record_attempt!(note_position: 0, expected_midi: 60, played_midi: 60, correct: true, response_ms: 500, played_velocity: 75, expected_velocity: 75)
+      session.update!(correct_notes: 1, total_notes: 1)
+      session.complete!(notes_reached: 1)
+      expect(session.reload.composite_score).to be_present
+    end
+  end
+
+  describe "#score_breakdown" do
+    let(:session) { create(:practice_session, accuracy_pct: 90.0, timing_score: 85.0, streak_score: 70.0, velocity_score: 80.0, composite_score: 83.5) }
+
+    it "returns a hash with all score dimensions" do
+      breakdown = session.score_breakdown
+      expect(breakdown).to eq(accuracy: 90.0, timing: 85.0, streak: 70.0, velocity: 80.0, composite: 83.5)
+    end
   end
 
   describe "#record_attempt!" do
@@ -52,6 +68,16 @@ RSpec.describe PracticeSession, type: :model do
     it "increments incorrect_notes on wrong attempt" do
       session.record_attempt!(note_position: 0, expected_midi: 60, played_midi: 62, correct: false)
       expect(session.reload.incorrect_notes).to eq(1)
+    end
+
+    it "stores velocity data" do
+      session.record_attempt!(
+        note_position: 0, expected_midi: 60, played_midi: 60,
+        correct: true, played_velocity: 85, expected_velocity: 75
+      )
+      attempt = session.session_attempts.last
+      expect(attempt.played_velocity).to eq(85)
+      expect(attempt.expected_velocity).to eq(75)
     end
   end
 end

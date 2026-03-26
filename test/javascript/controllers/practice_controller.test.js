@@ -20,7 +20,7 @@ function makeElement(notes = SAMPLE_NOTES, sessionId = 1, songPartId = 1) {
   el.setAttribute("data-practice-song-part-id-value", String(songPartId))
 
   // Add target elements
-  const targets = ["startButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
+  const targets = ["startButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay", "streakDisplay"]
   targets.forEach(name => {
     const t = document.createElement("div")
     t.setAttribute("data-practice-target", name)
@@ -122,6 +122,65 @@ describe("PracticeController", () => {
       controller.started = false
       controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 60, velocity: 80 } }))
       expect(controller.currentIndexValue).toBe(0)
+    })
+  })
+
+  describe("recordAttempt() — velocity data", () => {
+    beforeEach(() => {
+      controller.start()
+    })
+
+    it("sends played_velocity and expected_velocity in the fetch body", () => {
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 60, velocity: 95 } }))
+
+      const fetchCall = fetch.mock.calls[0]
+      const body = JSON.parse(fetchCall[1].body)
+      expect(body.attempt.played_velocity).toBe(95)
+      expect(body.attempt.expected_velocity).toBe(80) // from SAMPLE_NOTES[0].vel
+    })
+  })
+
+  describe("streak tracking", () => {
+    beforeEach(() => {
+      controller.start()
+    })
+
+    it("initializes streak counters to 0", () => {
+      expect(controller.currentStreak).toBe(0)
+      expect(controller.longestStreak).toBe(0)
+    })
+
+    it("increments currentStreak on correct note", () => {
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 60, velocity: 80 } }))
+      expect(controller.currentStreak).toBe(1)
+    })
+
+    it("resets currentStreak on wrong note", () => {
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 60, velocity: 80 } }))
+      expect(controller.currentStreak).toBe(1)
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 99, velocity: 80 } }))
+      expect(controller.currentStreak).toBe(0)
+    })
+
+    it("tracks longestStreak across correct-wrong-correct sequences", () => {
+      // Note 0 correct (streak 1)
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 60, velocity: 80 } }))
+      // Note 1 wrong (streak resets)
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 99, velocity: 80 } }))
+      // Note 1 correct (streak 1)
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 64, velocity: 80 } }))
+      // Note 2 correct (streak 2)
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 67, velocity: 80 } }))
+
+      expect(controller.longestStreak).toBe(2)
+    })
+
+    it("resets streaks when start() is called", () => {
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 60, velocity: 80 } }))
+      expect(controller.currentStreak).toBe(1)
+      controller.start()
+      expect(controller.currentStreak).toBe(0)
+      expect(controller.longestStreak).toBe(0)
     })
   })
 

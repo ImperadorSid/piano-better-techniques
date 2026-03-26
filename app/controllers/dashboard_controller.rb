@@ -7,6 +7,7 @@ class DashboardController < ApplicationController
 
     @total_sessions = PracticeSession.where(completed: true).count
     @avg_accuracy = PracticeSession.where(completed: true).average(:accuracy_pct)&.round(1) || 0
+    @avg_score = PracticeSession.where(completed: true).where.not(composite_score: nil).average(:composite_score)&.round(1) || 0
     @songs_practiced = PracticeSession.where(completed: true).distinct.count(:song_id)
 
     @accuracy_chart_data = @recent_sessions.reverse.map do |s|

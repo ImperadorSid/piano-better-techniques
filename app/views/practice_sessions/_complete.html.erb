@@ -1,10 +1,42 @@
 <div style="background:#111;border:1px solid #2d5a2d;border-radius:8px;padding:32px;text-align:center;margin-top:24px;">
   <h3 style="color:#90ee90;margin:0 0 8px;">Session Complete!</h3>
+
   <div style="font-size:3rem;font-weight:bold;color:#7c7cff;margin:16px 0;">
-    <%= session.accuracy_pct.to_f.round(1) %>%
+    <%= session.composite_score&.round(1) || session.accuracy_pct.to_f.round(1) %>
   </div>
-  <p style="color:#888;">Accuracy</p>
-  <p style="color:#888;">
+  <p style="color:#888;margin:0 0 24px;">Composite Score</p>
+
+  <%# Score breakdown bars %>
+  <div style="max-width:360px;margin:0 auto;text-align:left;">
+    <% [
+      ["Accuracy", session.accuracy_pct],
+      ["Timing", session.timing_score],
+      ["Streak", session.streak_score],
+      ["Dynamics", session.velocity_score]
+    ].each do |label, score| %>
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="color:#b0b0dd;font-size:0.85rem;"><%= label %></span>
+          <% if score %>
+            <% color = score >= 80 ? "#90ee90" : score >= 50 ? "#eeee90" : "#ee9090" %>
+            <span style="color:<%= color %>;font-size:0.85rem;font-weight:bold;"><%= score.round(1) %></span>
+          <% else %>
+            <span style="color:#555;font-size:0.85rem;">—</span>
+          <% end %>
+        </div>
+        <div style="background:#222;border-radius:4px;height:6px;overflow:hidden;">
+          <% bar_pct = score ? [score, 100].min : 0 %>
+          <% bar_color = score && score >= 80 ? "#90ee90" : score && score >= 50 ? "#eeee90" : "#ee9090" %>
+          <div style="background:<%= bar_color %>;height:100%;width:<%= bar_pct %>%;border-radius:4px;"></div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <p style="color:#888;margin:16px 0 0;font-size:0.9rem;">
+    Longest streak: <span style="color:#e0e0ff;font-weight:bold;"><%= session.longest_streak %></span> notes
+  </p>
+  <p style="color:#888;font-size:0.85rem;">
     <%= session.correct_notes %> correct · <%= session.incorrect_notes %> incorrect ·
     <%= session.notes_reached %> / <%= session.total_notes %> notes reached
   </p>

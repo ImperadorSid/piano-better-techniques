@@ -10,7 +10,9 @@ class AttemptsController < ApplicationController
       expected_midi: p[:expected_midi].to_i,
       played_midi: p[:played_midi].to_i,
       correct: ActiveModel::Type::Boolean.new.cast(p[:correct]),
-      response_ms: p[:response_ms]&.to_i
+      response_ms: p[:response_ms]&.to_i,
+      played_velocity: p[:played_velocity]&.to_i,
+      expected_velocity: p[:expected_velocity]&.to_i
     )
 
     render json: { ok: true }, status: :created
@@ -21,6 +23,6 @@ class AttemptsController < ApplicationController
   private
 
   def attempt_params
-    params.require(:attempt).permit(:note_position, :expected_midi, :played_midi, :correct, :response_ms)
+    params.require(:attempt).permit(:note_position, :expected_midi, :played_midi, :correct, :response_ms, :played_velocity, :expected_velocity)
   end
 end
