@@ -1,13 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
-import { isBlackKey } from "utils/midi_notes"
+import { isBlackKey, midiToName } from "utils/midi_notes"
 
-// Renders a virtual piano keyboard (C3–B5 range, 3 octaves).
+// Renders a virtual piano keyboard (C2–C7 range, 61 keys).
 // Exposes highlight() and flash() methods consumed via Stimulus Outlets.
 // Listens to midi:noteon / midi:noteoff on document to show pressed keys (amber).
 export default class extends Controller {
-  // MIDI range to display
-  static rangeStart = 48  // C3
-  static rangeEnd   = 84  // C6
+  // MIDI range to display (61 keys: C2–C7)
+  static rangeStart = 36  // C2
+  static rangeEnd   = 96  // C7
 
   connect() {
     this.keys = {}  // midi → element
@@ -26,7 +26,7 @@ export default class extends Controller {
   render() {
     this.element.innerHTML = ""
     const wrapper = document.createElement("div")
-    wrapper.style.cssText = "position:relative;display:flex;height:140px;background:#111;border-radius:8px;overflow:hidden;padding:8px;gap:2px;justify-content:center;"
+    wrapper.style.cssText = "position:relative;display:flex;height:180px;background:#111;border-radius:8px;overflow:hidden;padding:8px;justify-content:center;"
 
     const start = this.constructor.rangeStart
     const end   = this.constructor.rangeEnd
@@ -40,14 +40,23 @@ export default class extends Controller {
       else blackKeys.push(midi)
     }
 
-    // White keys container
+    // White keys container (no gap — use border for visual separation so % positioning works)
     const whiteRow = document.createElement("div")
-    whiteRow.style.cssText = "display:flex;gap:2px;position:relative;width:100%;"
+    whiteRow.style.cssText = "display:flex;position:relative;width:100%;"
 
     whiteKeys.forEach(midi => {
       const key = document.createElement("div")
-      key.style.cssText = "flex:1;background:white;border:1px solid #666;border-radius:0 0 4px 4px;cursor:default;position:relative;"
+      key.style.cssText = "flex:1;background:white;border-right:1px solid #ccc;border-bottom:1px solid #999;border-radius:0 0 4px 4px;cursor:default;position:relative;box-sizing:border-box;"
       key.dataset.midi = midi
+
+      // Label C keys with octave number
+      if (midi % 12 === 0) {
+        const label = document.createElement("span")
+        label.textContent = midiToName(midi)
+        label.style.cssText = "position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:10px;color:#999;pointer-events:none;user-select:none;"
+        key.appendChild(label)
+      }
+
       whiteRow.appendChild(key)
       this.keys[midi] = key
     })
@@ -55,29 +64,32 @@ export default class extends Controller {
     wrapper.appendChild(whiteRow)
 
     // Black keys (positioned absolutely over white keys)
-    // We compute position by counting white keys
+    // Position each black key at the boundary between its two adjacent white keys
+    const whiteKeyWidth = 100 / whiteKeys.length
+    const blackKeyWidth = whiteKeyWidth * 0.6
     let whiteIndex = 0
     for (let midi = start; midi <= end; midi++) {
       if (!isBlackKey(midi)) {
         whiteIndex++
       } else {
         const key = document.createElement("div")
-        // Position between the two surrounding white keys
-        const leftPct = ((whiteIndex - 0.5) / whiteKeys.length * 100).toFixed(2)
+        // Center the black key on the border between whiteIndex-1 and whiteIndex
+        const centerPct = whiteIndex * whiteKeyWidth
         key.style.cssText = `
           position:absolute;
-          left:calc(${leftPct}% - 1px);
+          left:${(centerPct - blackKeyWidth / 2).toFixed(2)}%;
           top:0;
-          width:calc(${(100 / whiteKeys.length * 0.6).toFixed(2)}%);
+          width:${blackKeyWidth.toFixed(2)}%;
           height:60%;
           background:#222;
           border:1px solid #555;
           border-radius:0 0 3px 3px;
           z-index:2;
           cursor:default;
+          box-sizing:border-box;
         `
         key.dataset.midi = midi
-        wrapper.appendChild(key)
+        whiteRow.appendChild(key)
         this.keys[midi] = key
       }
     }

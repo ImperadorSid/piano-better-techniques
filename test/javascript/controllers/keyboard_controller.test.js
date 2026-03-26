@@ -6,7 +6,11 @@ vi.mock("@hotwired/stimulus", async () => {
 })
 
 vi.mock("utils/midi_notes", () => ({
-  isBlackKey: (midi) => [1, 3, 6, 8, 10].includes(midi % 12)
+  isBlackKey: (midi) => [1, 3, 6, 8, 10].includes(midi % 12),
+  midiToName: (midi) => {
+    const names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    return `${names[midi % 12]}${Math.floor(midi / 12) - 1}`
+  }
 }))
 
 // Import keyboard controller after mocks
@@ -45,6 +49,28 @@ describe("KeyboardController", () => {
         .map(k => parseInt(k.dataset.midi))
       const blackKeys = allMidis.filter(m => [1, 3, 6, 8, 10].includes(m % 12))
       expect(blackKeys.length).toBeGreaterThan(0)
+    })
+
+    it("renders 61 keys (C2–C7)", () => {
+      const keys = element.querySelectorAll("[data-midi]")
+      expect(keys.length).toBe(61)
+    })
+
+    it("labels each C key with its octave name", () => {
+      const cKeys = [36, 48, 60, 72, 84, 96] // C2 through C7
+      cKeys.forEach(midi => {
+        const key = element.querySelector(`[data-midi='${midi}']`)
+        const label = key.querySelector("span")
+        expect(label).not.toBeNull()
+        expect(label.textContent).toMatch(/^C\d$/)
+      })
+    })
+
+    it("does not label non-C white keys", () => {
+      // D4 = MIDI 62
+      const key = element.querySelector("[data-midi='62']")
+      const label = key.querySelector("span")
+      expect(label).toBeNull()
     })
   })
 
