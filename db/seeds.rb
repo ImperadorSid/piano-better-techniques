@@ -87,7 +87,7 @@ if twinkle.song_parts.empty?
       { "start_beat" => 32, "end_beat" => 48, "level" => 1, "label" => "Repeat" }
     ],
     dynamics_map: [
-      { "beat" => 0, "velocity_avg" => 80, "marking" => "mf" }
+      { "beat" => 0, "velocity_avg" => 80, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 60, "method" => "manual" }
   )
@@ -162,8 +162,8 @@ if ode.song_parts.empty?
       { "start_beat" => 16, "end_beat" => 32, "level" => 2, "label" => "Phrase B" }
     ],
     dynamics_map: [
-      { "beat" => 0,  "velocity_avg" => 82, "marking" => "mf" },
-      { "beat" => 16, "velocity_avg" => 85, "marking" => "f" }
+      { "beat" => 0,  "velocity_avg" => 82, "marking" => "Medium" },
+      { "beat" => 16, "velocity_avg" => 85, "marking" => "Heavy" }
     ],
     hand_separation: { "split_midi" => 60, "method" => "manual" }
   )
@@ -235,7 +235,7 @@ if mary.song_parts.empty?
       { "start_beat" => 16, "end_beat" => 30, "level" => 1, "label" => "Verse 3" }
     ],
     dynamics_map: [
-      { "beat" => 0, "velocity_avg" => 80, "marking" => "mf" }
+      { "beat" => 0, "velocity_avg" => 80, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 60, "method" => "manual" }
   )
@@ -311,9 +311,9 @@ if happy.song_parts.empty?
       { "start_beat" => 18, "end_beat" => 24, "level" => 1, "label" => "Final verse" }
     ],
     dynamics_map: [
-      { "beat" => 0,  "velocity_avg" => 75, "marking" => "mp" },
-      { "beat" => 12, "velocity_avg" => 90, "marking" => "f" },
-      { "beat" => 18, "velocity_avg" => 80, "marking" => "mf" }
+      { "beat" => 0,  "velocity_avg" => 75, "marking" => "Medium" },
+      { "beat" => 12, "velocity_avg" => 90, "marking" => "Heavy" },
+      { "beat" => 18, "velocity_avg" => 80, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 60, "method" => "manual" }
   )
@@ -387,8 +387,8 @@ if elise.song_parts.empty?
       { "start_beat" => 10, "end_beat" => 16, "level" => 2, "label" => "Motif repeat" }
     ],
     dynamics_map: [
-      { "beat" => 0,  "velocity_avg" => 70, "marking" => "p" },
-      { "beat" => 4,  "velocity_avg" => 80, "marking" => "mf" }
+      { "beat" => 0,  "velocity_avg" => 70, "marking" => "Medium" },
+      { "beat" => 4,  "velocity_avg" => 80, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 64, "method" => "manual" }
   )
@@ -462,9 +462,9 @@ if canon.song_parts.empty?
       { "start_beat" => 16, "end_beat" => 25, "level" => 3, "label" => "Higher register" }
     ],
     dynamics_map: [
-      { "beat" => 0,  "velocity_avg" => 70, "marking" => "p" },
-      { "beat" => 8,  "velocity_avg" => 75, "marking" => "mp" },
-      { "beat" => 16, "velocity_avg" => 85, "marking" => "mf" }
+      { "beat" => 0,  "velocity_avg" => 70, "marking" => "Medium" },
+      { "beat" => 8,  "velocity_avg" => 75, "marking" => "Medium" },
+      { "beat" => 16, "velocity_avg" => 85, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 62, "method" => "manual" }
   )
@@ -533,7 +533,7 @@ if clocks.song_parts.empty?
       { "start_beat" => 8,  "end_beat" => 12, "level" => 2, "label" => "Fm arpeggio" }
     ],
     dynamics_map: [
-      { "beat" => 0, "velocity_avg" => 80, "marking" => "mf" }
+      { "beat" => 0, "velocity_avg" => 80, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 60, "method" => "manual" }
   )
@@ -611,8 +611,8 @@ if someone.song_parts.empty?
       { "start_beat" => 8,  "end_beat" => 16, "level" => 2, "label" => "D / E arpeggios" }
     ],
     dynamics_map: [
-      { "beat" => 0,  "velocity_avg" => 65, "marking" => "p" },
-      { "beat" => 12, "velocity_avg" => 75, "marking" => "mp" }
+      { "beat" => 0,  "velocity_avg" => 65, "marking" => "Medium" },
+      { "beat" => 12, "velocity_avg" => 75, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 64, "method" => "manual" }
   )
@@ -686,8 +686,8 @@ if letitbe.song_parts.empty?
       { "start_beat" => 10, "end_beat" => 18, "level" => 1, "label" => "Let it be refrain" }
     ],
     dynamics_map: [
-      { "beat" => 0,  "velocity_avg" => 75, "marking" => "mp" },
-      { "beat" => 10, "velocity_avg" => 85, "marking" => "mf" }
+      { "beat" => 0,  "velocity_avg" => 75, "marking" => "Medium" },
+      { "beat" => 10, "velocity_avg" => 85, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 60, "method" => "manual" }
   )
@@ -756,7 +756,7 @@ if imagine.song_parts.empty?
       { "start_beat" => 8,  "end_beat" => 12, "level" => 1, "label" => "Return to C" }
     ],
     dynamics_map: [
-      { "beat" => 0, "velocity_avg" => 70, "marking" => "p" }
+      { "beat" => 0, "velocity_avg" => 70, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 60, "method" => "manual" }
   )
@@ -824,8 +824,8 @@ if allofme.song_parts.empty?
       { "start_beat" => 8,  "end_beat" => 14, "level" => 3, "label" => "Melodic climb" }
     ],
     dynamics_map: [
-      { "beat" => 0,  "velocity_avg" => 70, "marking" => "p" },
-      { "beat" => 8,  "velocity_avg" => 80, "marking" => "mf" }
+      { "beat" => 0,  "velocity_avg" => 70, "marking" => "Medium" },
+      { "beat" => 8,  "velocity_avg" => 80, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 63, "method" => "manual" }
   )
@@ -896,9 +896,9 @@ if thousand.song_parts.empty?
       { "start_beat" => 14, "end_beat" => 20, "level" => 2, "label" => "Thousand years hook" }
     ],
     dynamics_map: [
-      { "beat" => 0,  "velocity_avg" => 80, "marking" => "mf" },
-      { "beat" => 10, "velocity_avg" => 90, "marking" => "f" },
-      { "beat" => 14, "velocity_avg" => 85, "marking" => "mf" }
+      { "beat" => 0,  "velocity_avg" => 80, "marking" => "Medium" },
+      { "beat" => 10, "velocity_avg" => 90, "marking" => "Heavy" },
+      { "beat" => 14, "velocity_avg" => 85, "marking" => "Medium" }
     ],
     hand_separation: { "split_midi" => 62, "method" => "manual" }
   )
@@ -966,8 +966,8 @@ if staywithme.song_parts.empty?
       { "start_beat" => 10, "end_beat" => 21, "level" => 1, "label" => "Bridge and resolve" }
     ],
     dynamics_map: [
-      { "beat" => 0,  "velocity_avg" => 80, "marking" => "mf" },
-      { "beat" => 16, "velocity_avg" => 85, "marking" => "f" }
+      { "beat" => 0,  "velocity_avg" => 80, "marking" => "Medium" },
+      { "beat" => 16, "velocity_avg" => 85, "marking" => "Heavy" }
     ],
     hand_separation: { "split_midi" => 60, "method" => "manual" }
   )

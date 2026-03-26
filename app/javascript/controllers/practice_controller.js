@@ -185,11 +185,8 @@ export default class extends Controller {
   }
 
   velocityLabel(velocity) {
-    if (velocity >= 112) return "ff (fortissimo)"
-    if (velocity >= 88)  return "f (forte)"
-    if (velocity >= 64)  return "mf (mezzo-forte)"
-    if (velocity >= 40)  return "mp (mezzo-piano)"
-    if (velocity >= 20)  return "p (piano)"
-    return "pp (pianissimo)"
+    if (velocity >= 85)  return "Heavy"
+    if (velocity >= 43)  return "Medium"
+    return "Light"
   }
 }

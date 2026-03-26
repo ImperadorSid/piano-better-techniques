@@ -44,7 +44,7 @@ RSpec.describe Analyzers::DifficultyScorer do
 
     it "includes a known dynamic marking" do
       result = described_class.new(song).dynamics_map
-      valid_markings = %w[pp p mp mf f ff]
+      valid_markings = %w[Light Medium Heavy]
       expect(valid_markings).to include(result.first["marking"])
     end
   end

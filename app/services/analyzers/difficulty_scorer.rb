@@ -83,12 +83,9 @@ module Analyzers
 
     def velocity_to_marking(velocity)
       case velocity
-      when 0..19   then "pp"
-      when 20..39  then "p"
-      when 40..63  then "mp"
-      when 64..87  then "mf"
-      when 88..111 then "f"
-      else              "ff"
+      when 0..42   then "Light"
+      when 43..84  then "Medium"
+      else              "Heavy"
       end
     end
   end

@@ -141,16 +141,16 @@ describe("PracticeController", () => {
   })
 
   describe("velocityLabel()", () => {
-    it("returns pp for velocity < 20", () => {
-      expect(controller.velocityLabel(10)).toContain("pp")
+    it("returns Light for velocity < 43", () => {
+      expect(controller.velocityLabel(10)).toBe("Light")
     })
 
-    it("returns mf for velocity 64-87", () => {
-      expect(controller.velocityLabel(80)).toContain("mf")
+    it("returns Medium for velocity 43-84", () => {
+      expect(controller.velocityLabel(60)).toBe("Medium")
     })
 
-    it("returns ff for velocity >= 112", () => {
-      expect(controller.velocityLabel(120)).toContain("ff")
+    it("returns Heavy for velocity >= 85", () => {
+      expect(controller.velocityLabel(120)).toBe("Heavy")
     })
   })
 })
