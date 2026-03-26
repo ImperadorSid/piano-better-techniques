@@ -117,13 +117,7 @@ export default class extends Controller {
 
     key.style.background = color
     setTimeout(() => {
-      if (key.dataset.pressed === "true") {
-        key.style.background = isBlackKey(midi) ? "#b87a00" : "#ffc247"
-      } else if (key.dataset.highlighted === "true") {
-        key.style.background = isBlackKey(midi) ? "#2244aa" : "#aabbff"
-      } else {
-        key.style.background = isBlackKey(midi) ? "#222" : "white"
-      }
+      key.style.background = isBlackKey(midi) ? "#222" : "white"
     }, 400)
   }
 
@@ -136,12 +130,11 @@ export default class extends Controller {
     })
   }
 
-  // Color a key amber while it is physically held down on the real piano
+  // Track that a key is physically held down on the real piano
   press(midi) {
     const key = this.keys[midi]
     if (!key) return
     key.dataset.pressed = "true"
-    key.style.background = isBlackKey(midi) ? "#b87a00" : "#ffc247"
   }
 
   // Restore a key to its resting state when released

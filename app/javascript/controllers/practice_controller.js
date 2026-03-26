@@ -89,11 +89,6 @@ export default class extends Controller {
     const note = this.notesValue[this.currentIndexValue]
     if (!note) return
 
-    // Highlight keyboard
-    if (this.hasKeyboardOutlet) {
-      this.keyboardOutlet.highlight(note.midi)
-    }
-
     if (this.hasNoteDisplayTarget) {
       this.noteDisplayTarget.textContent = note.name
     }
@@ -126,9 +121,6 @@ export default class extends Controller {
   complete() {
     this.started = false
 
-    if (this.hasKeyboardOutlet) {
-      this.keyboardOutlet.clearHighlight()
-    }
     if (this.hasStaffOutlet) {
       this.staffOutlet.clear()
     }
