@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // Listens for midi:noteon events dispatched by midi_controller.
 // Communicates with keyboard_controller via Stimulus Outlets.
 export default class extends Controller {
-  static targets = ["startButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
+  static targets = ["startButton", "restartButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
   static outlets = ["keyboard", "staff"]
   static values  = {
     notes:       Array,
@@ -41,8 +41,33 @@ export default class extends Controller {
     if (this.hasStartButtonTarget) {
       this.startButtonTarget.style.display = "none"
     }
+    if (this.hasRestartButtonTarget) {
+      this.restartButtonTarget.style.display = "inline-block"
+    }
 
     this.showCurrentNote()
+  }
+
+  restart() {
+    this.started = false
+
+    if (this.hasScorePanelTarget) {
+      this.scorePanelTarget.style.display = "none"
+    }
+    if (this.hasStaffOutlet) {
+      this.staffOutlet.clear()
+    }
+    if (this.hasRestartButtonTarget) {
+      this.restartButtonTarget.style.display = "none"
+    }
+    if (this.hasProgressBarTarget) {
+      this.progressBarTarget.style.width = "0%"
+    }
+    if (this.hasProgressTextTarget) {
+      this.progressTextTarget.textContent = `0 / ${this.notesValue.length} notes`
+    }
+
+    this.start()
   }
 
   handleNoteOn(event) {

@@ -20,7 +20,7 @@ function makeElement(notes = SAMPLE_NOTES, sessionId = 1, songPartId = 1) {
   el.setAttribute("data-practice-song-part-id-value", String(songPartId))
 
   // Add target elements
-  const targets = ["startButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
+  const targets = ["startButton", "restartButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
   targets.forEach(name => {
     const t = document.createElement("div")
     t.setAttribute("data-practice-target", name)
@@ -85,6 +85,29 @@ describe("PracticeController", () => {
       emptyController.connect()
       emptyController.start()
       expect(emptyController.started).toBe(false)
+    })
+  })
+
+  describe("restart()", () => {
+    it("resets counters and restarts practice", () => {
+      controller.start()
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 60, velocity: 80 } }))
+      expect(controller.currentIndexValue).toBe(1)
+      expect(controller.correctCount).toBe(1)
+
+      controller.restart()
+      expect(controller.currentIndexValue).toBe(0)
+      expect(controller.correctCount).toBe(0)
+      expect(controller.incorrectCount).toBe(0)
+      expect(controller.started).toBe(true)
+    })
+
+    it("resets progress bar", () => {
+      controller.start()
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 60, velocity: 80 } }))
+      controller.restart()
+      const bar = element.querySelector("[data-practice-target='progressBar']")
+      expect(bar.style.width).toBe("0%")
     })
   })
 
