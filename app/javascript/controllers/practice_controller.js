@@ -6,7 +6,7 @@ import { Controller } from "@hotwired/stimulus"
 // Communicates with keyboard_controller via Stimulus Outlets.
 export default class extends Controller {
   static targets = ["startButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
-  static outlets = ["keyboard"]
+  static outlets = ["keyboard", "staff"]
   static values  = {
     notes:       Array,
     sessionId:   Number,
@@ -102,6 +102,11 @@ export default class extends Controller {
       this.noteLabelTarget.textContent = `MIDI ${note.midi} · ${dynamics}`
     }
 
+    // Update staff notation
+    if (this.hasStaffOutlet) {
+      this.staffOutlet.showNotes(this.currentIndexValue, this.notesValue)
+    }
+
     this.noteStartedAt = Date.now()
   }
 
@@ -123,6 +128,9 @@ export default class extends Controller {
 
     if (this.hasKeyboardOutlet) {
       this.keyboardOutlet.clearHighlight()
+    }
+    if (this.hasStaffOutlet) {
+      this.staffOutlet.clear()
     }
 
     // Notify Rails to finalize the session

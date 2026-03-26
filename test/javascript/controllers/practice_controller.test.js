@@ -140,6 +140,31 @@ describe("PracticeController", () => {
     })
   })
 
+  describe("staff outlet integration", () => {
+    it("calls staffOutlet.showNotes() when showCurrentNote is invoked", () => {
+      const mockStaff = { showNotes: vi.fn(), clear: vi.fn() }
+      Object.defineProperty(controller, "hasStaffOutlet", { get: () => true })
+      Object.defineProperty(controller, "staffOutlet", { get: () => mockStaff })
+
+      controller.start()
+      expect(mockStaff.showNotes).toHaveBeenCalledWith(0, controller.notesValue)
+    })
+
+    it("calls staffOutlet.clear() on completion", () => {
+      const mockStaff = { showNotes: vi.fn(), clear: vi.fn() }
+      Object.defineProperty(controller, "hasStaffOutlet", { get: () => true })
+      Object.defineProperty(controller, "staffOutlet", { get: () => mockStaff })
+
+      controller.start()
+      SAMPLE_NOTES.forEach(note => {
+        controller.handleNoteOn(new CustomEvent("midi:noteon", {
+          detail: { midi: note.midi, velocity: 80 }
+        }))
+      })
+      expect(mockStaff.clear).toHaveBeenCalled()
+    })
+  })
+
   describe("velocityLabel()", () => {
     it("returns Light for velocity < 43", () => {
       expect(controller.velocityLabel(10)).toBe("Light")
