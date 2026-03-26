@@ -5,7 +5,7 @@
 </div>
 
 <h2 style="margin-bottom:4px;"><%= @song_part.song.title %></h2>
-<p style="color:#888;margin:0 0 24px;"><%= @song_part.name %> · <%= @song_part.note_count %> notes</p>
+<p style="color:#888;margin:0 0 24px;"><%= @song_part.name %> · <%= @song_part.note_count %> notes · <%= @song_part.song.tempo_bpm %> BPM</p>
 
 <div data-controller="midi practice"
      data-practice-notes-value="<%= @song_part.notes.to_json %>"
