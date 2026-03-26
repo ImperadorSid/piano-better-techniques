@@ -1,12 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
-import { Renderer, Stave, StaveNote, Voice, Formatter, Accidental } from "vexflow"
+import { Renderer, Stave, StaveNote, Voice, Formatter, Accidental, Barline } from "vexflow"
 
-const WINDOW_SIZE = 6
+const MEASURES_VISIBLE = 3
+const STAVE_HEIGHT = 120
 
 // Renders a mini staff notation display using VexFlow.
-// Shows a sliding window of notes with the current note highlighted.
+// Shows 3 measures at a time with bar lines, highlighting the current note.
 // Consumed by practice_controller via Stimulus Outlets.
 export default class extends Controller {
+  static values = {
+    beatsPerMeasure: { type: Number, default: 4 }
+  }
+
   connect() {
     // Rendering is triggered by practice_controller calling showNotes()
   }
@@ -16,65 +21,104 @@ export default class extends Controller {
   }
 
   showNotes(currentIndex, allNotes) {
-    const { windowNotes, activeOffset } = this._computeWindow(currentIndex, allNotes)
-    this._render(windowNotes, activeOffset)
+    const measures = this._groupByMeasure(allNotes)
+    const currentMeasureIndex = this._measureIndexForNote(allNotes, currentIndex)
+    const { visibleMeasures, startMeasure } = this._computeVisibleMeasures(measures, currentMeasureIndex)
+    const activeNoteIndex = currentIndex
+    this._render(visibleMeasures, startMeasure, allNotes, activeNoteIndex)
   }
 
   clear() {
     this.element.innerHTML = ""
   }
 
-  _computeWindow(currentIndex, allNotes) {
-    let start = currentIndex
-    let end = Math.min(start + WINDOW_SIZE, allNotes.length)
-    if (end - start < WINDOW_SIZE && allNotes.length >= WINDOW_SIZE) {
-      start = Math.max(0, end - WINDOW_SIZE)
+  _groupByMeasure(allNotes) {
+    const bpm = this.beatsPerMeasureValue
+    const measures = []
+    allNotes.forEach((note, idx) => {
+      const measureNum = note.beat != null ? Math.floor(note.beat / bpm) : 0
+      if (!measures[measureNum]) measures[measureNum] = []
+      measures[measureNum].push({ ...note, _index: idx })
+    })
+    // Fill any empty measures with empty arrays
+    for (let i = 0; i < measures.length; i++) {
+      if (!measures[i]) measures[i] = []
     }
+    return measures
+  }
+
+  _measureIndexForNote(allNotes, noteIndex) {
+    const note = allNotes[noteIndex]
+    if (!note || note.beat == null) return 0
+    return Math.floor(note.beat / this.beatsPerMeasureValue)
+  }
+
+  _computeVisibleMeasures(measures, currentMeasureIndex) {
+    // Fixed pages of 3 measures: [0,1,2], [3,4,5], [6,7,8], etc.
+    // Only advances when the player finishes all notes in the current page.
+    const start = Math.floor(currentMeasureIndex / MEASURES_VISIBLE) * MEASURES_VISIBLE
+    const end = Math.min(start + MEASURES_VISIBLE, measures.length)
     return {
-      windowNotes: allNotes.slice(start, end),
-      activeOffset: currentIndex - start
+      visibleMeasures: measures.slice(start, end),
+      startMeasure: start
     }
   }
 
-  _render(windowNotes, activeOffset) {
+  _render(visibleMeasures, startMeasure, allNotes, activeNoteIndex) {
     this.element.innerHTML = ""
-    if (windowNotes.length === 0) return
+    if (visibleMeasures.length === 0) return
 
     const width = Math.max(this.element.clientWidth || 500, 300)
-    const height = 150
 
     const renderer = new Renderer(this.element, Renderer.Backends.SVG)
-    renderer.resize(width, height)
+    renderer.resize(width, STAVE_HEIGHT)
     const context = renderer.getContext()
 
-    const stave = new Stave(0, 20, width)
-    stave.addClef("treble")
-    stave.setContext(context).draw()
+    const clefWidth = 50
+    const totalStaveWidth = width - clefWidth
+    const measureWidth = totalStaveWidth / visibleMeasures.length
 
-    const staveNotes = windowNotes.map((note, i) => {
-      const vfKey = this._noteNameToVexflow(note.name)
-      const vfDur = this._durToVexflow(note.dur)
-      const sn = new StaveNote({ keys: [vfKey], duration: vfDur })
+    visibleMeasures.forEach((measureNotes, i) => {
+      const x = i === 0 ? 0 : clefWidth + measureWidth * i
+      const w = i === 0 ? clefWidth + measureWidth : measureWidth
 
-      if (note.name.includes("#")) {
-        sn.addModifier(new Accidental("#"), 0)
+      const stave = new Stave(x, 10, w)
+      if (i === 0) stave.addClef("treble")
+      if (i < visibleMeasures.length - 1) {
+        stave.setEndBarType(Barline.type.SINGLE)
       }
+      stave.setContext(context).draw()
 
-      if (i === activeOffset) {
-        sn.setStyle({ fillStyle: "#5555ff", strokeStyle: "#5555ff" })
-      } else {
-        sn.setStyle({ fillStyle: "#aaa", strokeStyle: "#aaa" })
-      }
+      if (measureNotes.length === 0) return
 
-      return sn
+      const staveNotes = measureNotes.map(note => {
+        const vfKey = this._noteNameToVexflow(note.name)
+        const vfDur = this._durToVexflow(note.dur)
+        const sn = new StaveNote({ keys: [vfKey], duration: vfDur })
+
+        if (note.name.includes("#")) {
+          sn.addModifier(new Accidental("#"), 0)
+        }
+
+        if (note._index === activeNoteIndex) {
+          sn.setStyle({ fillStyle: "#5555ff", strokeStyle: "#5555ff" })
+        } else {
+          sn.setStyle({ fillStyle: "#aaa", strokeStyle: "#aaa" })
+        }
+
+        return sn
+      })
+
+      const voice = new Voice({
+        num_beats: this.beatsPerMeasureValue,
+        beat_value: 4
+      })
+      voice.setMode(Voice.Mode.SOFT)
+      voice.addTickables(staveNotes)
+
+      new Formatter().joinVoices([voice]).format([voice], w - 20)
+      voice.draw(context, stave)
     })
-
-    const voice = new Voice({ num_beats: windowNotes.length, beat_value: 4 })
-    voice.setMode(Voice.Mode.SOFT)
-    voice.addTickables(staveNotes)
-
-    new Formatter().joinVoices([voice]).format([voice], width - 80)
-    voice.draw(context, stave)
   }
 
   _noteNameToVexflow(name) {

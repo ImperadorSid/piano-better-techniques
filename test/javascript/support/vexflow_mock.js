@@ -11,11 +11,6 @@ const mockRenderer = {
   getContext: vi.fn(() => mockContext),
 }
 
-const mockStave = {
-  addClef: vi.fn().mockReturnThis(),
-  setContext: vi.fn().mockReturnThis(),
-  draw: vi.fn().mockReturnThis(),
-}
 
 const mockVoice = {
   setMode: vi.fn().mockReturnThis(),
@@ -31,7 +26,16 @@ const mockFormatter = {
 export function Renderer() { return mockRenderer }
 Renderer.Backends = { SVG: 1 }
 
-export function Stave() { return mockStave }
+export function Stave() {
+  return {
+    addClef: vi.fn().mockReturnThis(),
+    setEndBarType: vi.fn().mockReturnThis(),
+    setContext: vi.fn().mockReturnThis(),
+    draw: vi.fn().mockReturnThis(),
+  }
+}
+
+export const Barline = { type: { SINGLE: 1, DOUBLE: 2, END: 3 } }
 
 export function StaveNote() {
   return {

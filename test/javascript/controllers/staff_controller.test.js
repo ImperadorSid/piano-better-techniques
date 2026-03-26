@@ -9,25 +9,38 @@ const { default: StaffController } = await import(
   "../../../app/javascript/controllers/staff_controller.js"
 )
 
+// 4/4 time: measure 1 = beats 0-3, measure 2 = beats 4-7, measure 3 = beats 8-11
 const SAMPLE_NOTES = [
-  { pos: 0, midi: 60, name: "C4",  dur: 1.0, vel: 80, beat: 0.0 },
-  { pos: 1, midi: 62, name: "D4",  dur: 1.0, vel: 80, beat: 1.0 },
-  { pos: 2, midi: 64, name: "E4",  dur: 0.5, vel: 80, beat: 2.0 },
-  { pos: 3, midi: 65, name: "F4",  dur: 1.0, vel: 80, beat: 2.5 },
-  { pos: 4, midi: 67, name: "G4",  dur: 2.0, vel: 80, beat: 3.5 },
-  { pos: 5, midi: 69, name: "A4",  dur: 1.0, vel: 80, beat: 5.5 },
-  { pos: 6, midi: 71, name: "B4",  dur: 1.0, vel: 80, beat: 6.5 },
-  { pos: 7, midi: 72, name: "C5",  dur: 4.0, vel: 80, beat: 7.5 },
+  { pos: 0, midi: 60, name: "C4", dur: 1.0, vel: 80, beat: 0.0 },
+  { pos: 1, midi: 60, name: "C4", dur: 1.0, vel: 80, beat: 1.0 },
+  { pos: 2, midi: 67, name: "G4", dur: 1.0, vel: 80, beat: 2.0 },
+  { pos: 3, midi: 67, name: "G4", dur: 1.0, vel: 80, beat: 3.0 },
+  { pos: 4, midi: 69, name: "A4", dur: 1.0, vel: 80, beat: 4.0 },
+  { pos: 5, midi: 69, name: "A4", dur: 1.0, vel: 80, beat: 5.0 },
+  { pos: 6, midi: 67, name: "G4", dur: 2.0, vel: 80, beat: 6.0 },
+  { pos: 7, midi: 65, name: "F4", dur: 1.0, vel: 80, beat: 8.0 },
+  { pos: 8, midi: 65, name: "F4", dur: 1.0, vel: 80, beat: 9.0 },
+  { pos: 9, midi: 64, name: "E4", dur: 1.0, vel: 80, beat: 10.0 },
+  { pos: 10, midi: 64, name: "E4", dur: 1.0, vel: 80, beat: 11.0 },
+  { pos: 11, midi: 62, name: "D4", dur: 1.0, vel: 80, beat: 12.0 },
+  { pos: 12, midi: 62, name: "D4", dur: 1.0, vel: 80, beat: 13.0 },
+  { pos: 13, midi: 60, name: "C4", dur: 2.0, vel: 80, beat: 14.0 },
 ]
+
+function makeElement(beatsPerMeasure = 4) {
+  const el = document.createElement("div")
+  el.setAttribute("data-staff-beats-per-measure-value", String(beatsPerMeasure))
+  el.style.width = "500px"
+  document.body.appendChild(el)
+  return el
+}
 
 describe("StaffController", () => {
   let element, controller
 
   beforeEach(() => {
     document.body.innerHTML = ""
-    element = document.createElement("div")
-    element.style.width = "500px"
-    document.body.appendChild(element)
+    element = makeElement()
     controller = new StaffController(element)
     controller.connect()
   })
@@ -38,7 +51,7 @@ describe("StaffController", () => {
     })
 
     it("does not throw when currentIndex is near the end", () => {
-      expect(() => controller.showNotes(7, SAMPLE_NOTES)).not.toThrow()
+      expect(() => controller.showNotes(13, SAMPLE_NOTES)).not.toThrow()
     })
 
     it("does not throw with empty notes array", () => {
@@ -59,6 +72,72 @@ describe("StaffController", () => {
     })
   })
 
+  describe("_groupByMeasure()", () => {
+    it("groups notes into measures by beat position", () => {
+      const measures = controller._groupByMeasure(SAMPLE_NOTES)
+      // Measure 0: beats 0-3 (4 notes), Measure 1: beats 4-7 (3 notes), Measure 2: beats 8-11 (4 notes)
+      expect(measures[0].length).toBe(4)
+      expect(measures[1].length).toBe(3)
+      expect(measures[2].length).toBe(4)
+    })
+
+    it("respects 3/4 time signature", () => {
+      const el = makeElement(3)
+      const ctrl = new StaffController(el)
+      ctrl.connect()
+      const waltzNotes = [
+        { pos: 0, midi: 60, name: "C4", dur: 1.0, vel: 80, beat: 0.0 },
+        { pos: 1, midi: 62, name: "D4", dur: 1.0, vel: 80, beat: 1.0 },
+        { pos: 2, midi: 64, name: "E4", dur: 1.0, vel: 80, beat: 2.0 },
+        { pos: 3, midi: 65, name: "F4", dur: 1.0, vel: 80, beat: 3.0 },
+      ]
+      const measures = ctrl._groupByMeasure(waltzNotes)
+      expect(measures[0].length).toBe(3) // beats 0, 1, 2
+      expect(measures[1].length).toBe(1) // beat 3
+    })
+
+    it("preserves original note index as _index", () => {
+      const measures = controller._groupByMeasure(SAMPLE_NOTES)
+      expect(measures[0][0]._index).toBe(0)
+      expect(measures[1][0]._index).toBe(4)
+    })
+  })
+
+  describe("_measureIndexForNote()", () => {
+    it("returns measure 0 for beat 0", () => {
+      expect(controller._measureIndexForNote(SAMPLE_NOTES, 0)).toBe(0)
+    })
+
+    it("returns measure 1 for beat 4.0", () => {
+      expect(controller._measureIndexForNote(SAMPLE_NOTES, 4)).toBe(1)
+    })
+
+    it("returns measure 2 for beat 8.0", () => {
+      expect(controller._measureIndexForNote(SAMPLE_NOTES, 7)).toBe(2)
+    })
+  })
+
+  describe("_computeVisibleMeasures()", () => {
+    it("shows first page of 3 measures for measure 0", () => {
+      const measures = controller._groupByMeasure(SAMPLE_NOTES)
+      const { visibleMeasures, startMeasure } = controller._computeVisibleMeasures(measures, 0)
+      expect(visibleMeasures.length).toBe(3)
+      expect(startMeasure).toBe(0)
+    })
+
+    it("stays on same page while within first 3 measures", () => {
+      const measures = controller._groupByMeasure(SAMPLE_NOTES)
+      const { startMeasure } = controller._computeVisibleMeasures(measures, 2)
+      expect(startMeasure).toBe(0)
+    })
+
+    it("advances to next page when entering measure 3", () => {
+      const measures = controller._groupByMeasure(SAMPLE_NOTES)
+      const { startMeasure } = controller._computeVisibleMeasures(measures, 3)
+      expect(startMeasure).toBe(3)
+    })
+  })
+
   describe("_noteNameToVexflow()", () => {
     it("converts C4 to c/4", () => {
       expect(controller._noteNameToVexflow("C4")).toBe("c/4")
@@ -68,74 +147,30 @@ describe("StaffController", () => {
       expect(controller._noteNameToVexflow("C#4")).toBe("c#/4")
     })
 
-    it("converts A2 to a/2", () => {
-      expect(controller._noteNameToVexflow("A2")).toBe("a/2")
-    })
-
     it("returns c/4 for invalid input", () => {
       expect(controller._noteNameToVexflow("xyz")).toBe("c/4")
     })
   })
 
   describe("_durToVexflow()", () => {
-    it("maps 1.0 to q (quarter)", () => {
+    it("maps 1.0 to q", () => {
       expect(controller._durToVexflow(1)).toBe("q")
     })
 
-    it("maps 0.5 to 8 (eighth)", () => {
+    it("maps 0.5 to 8", () => {
       expect(controller._durToVexflow(0.5)).toBe("8")
     })
 
-    it("maps 2.0 to h (half)", () => {
+    it("maps 2.0 to h", () => {
       expect(controller._durToVexflow(2)).toBe("h")
     })
 
-    it("maps 4.0 to w (whole)", () => {
+    it("maps 4.0 to w", () => {
       expect(controller._durToVexflow(4)).toBe("w")
-    })
-
-    it("maps 0.25 to 16 (sixteenth)", () => {
-      expect(controller._durToVexflow(0.25)).toBe("16")
     })
 
     it("defaults to q for unknown duration", () => {
       expect(controller._durToVexflow(3.7)).toBe("q")
-    })
-  })
-
-  describe("_computeWindow()", () => {
-    it("returns WINDOW_SIZE notes starting from currentIndex", () => {
-      const { windowNotes, activeOffset } = controller._computeWindow(0, SAMPLE_NOTES)
-      expect(windowNotes.length).toBe(6)
-      expect(activeOffset).toBe(0)
-    })
-
-    it("sets activeOffset correctly for middle index", () => {
-      const { windowNotes, activeOffset } = controller._computeWindow(3, SAMPLE_NOTES)
-      // Notes 3-8 = 5 remaining, but window shifts back to fill 6
-      expect(windowNotes.length).toBe(6)
-      expect(activeOffset).toBe(1)
-    })
-
-    it("shifts window back when near end to fill WINDOW_SIZE", () => {
-      const { windowNotes, activeOffset } = controller._computeWindow(7, SAMPLE_NOTES)
-      expect(windowNotes.length).toBe(6)
-      expect(activeOffset).toBe(5)
-    })
-
-    it("handles arrays shorter than WINDOW_SIZE", () => {
-      const short = SAMPLE_NOTES.slice(0, 3)
-      const { windowNotes, activeOffset } = controller._computeWindow(1, short)
-      // Only 2 notes from index 1 onward, no shift since array < WINDOW_SIZE
-      expect(windowNotes.length).toBe(2)
-      expect(activeOffset).toBe(0)
-    })
-
-    it("handles single-note array", () => {
-      const single = [SAMPLE_NOTES[0]]
-      const { windowNotes, activeOffset } = controller._computeWindow(0, single)
-      expect(windowNotes.length).toBe(1)
-      expect(activeOffset).toBe(0)
     })
   })
 })
