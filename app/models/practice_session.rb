@@ -26,7 +26,6 @@ class PracticeSession < ApplicationRecord
     {
       accuracy: accuracy_pct,
       timing: timing_score,
-      streak: streak_score,
       velocity: velocity_score,
       composite: composite_score
     }

@@ -38,11 +38,11 @@ RSpec.describe PracticeSession, type: :model do
   end
 
   describe "#score_breakdown" do
-    let(:session) { create(:practice_session, accuracy_pct: 90.0, timing_score: 85.0, streak_score: 70.0, velocity_score: 80.0, composite_score: 83.5) }
+    let(:session) { create(:practice_session, accuracy_pct: 90.0, timing_score: 85.0, velocity_score: 80.0, composite_score: 83.5) }
 
     it "returns a hash with all score dimensions" do
       breakdown = session.score_breakdown
-      expect(breakdown).to eq(accuracy: 90.0, timing: 85.0, streak: 70.0, velocity: 80.0, composite: 83.5)
+      expect(breakdown).to eq(accuracy: 90.0, timing: 85.0, velocity: 80.0, composite: 83.5)
     end
   end
 

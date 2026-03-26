@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_26_180205) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_26_183249) do
   create_table "practice_sessions", force: :cascade do |t|
     t.float "accuracy_pct"
     t.boolean "completed"
@@ -19,12 +19,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_26_180205) do
     t.datetime "created_at", null: false
     t.datetime "ended_at"
     t.integer "incorrect_notes"
-    t.integer "longest_streak", default: 0
     t.integer "notes_reached"
     t.integer "song_id", null: false
     t.integer "song_part_id", null: false
     t.datetime "started_at"
-    t.float "streak_score"
     t.float "timing_score"
     t.integer "total_notes"
     t.datetime "updated_at", null: false

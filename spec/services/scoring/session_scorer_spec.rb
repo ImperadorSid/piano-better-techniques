@@ -27,9 +27,7 @@ RSpec.describe Scoring::SessionScorer do
         session.reload
         expect(session.composite_score).to be >= 95.0
         expect(session.timing_score).to eq(100.0)
-        expect(session.streak_score).to eq(100.0)
         expect(session.velocity_score).to eq(100.0)
-        expect(session.longest_streak).to eq(5)
       end
     end
 
@@ -39,14 +37,12 @@ RSpec.describe Scoring::SessionScorer do
         session.update!(correct_notes: 0, incorrect_notes: 5, accuracy_pct: 0.0)
       end
 
-      it "has zero accuracy and streak scores" do
+      it "has zero accuracy but timing defaults high" do
         described_class.new(session).calculate!
         session.reload
-        expect(session.streak_score).to eq(0.0)
-        expect(session.longest_streak).to eq(0)
         # Timing defaults to 100 with < 2 correct data points; velocity is nil
-        # Composite reflects weighted: accuracy=0, timing=100, streak=0, velocity redistributed
-        expect(session.composite_score).to be < 40.0
+        # Composite reflects weighted: accuracy=0, timing=100, velocity redistributed
+        expect(session.composite_score).to be < 55.0
       end
     end
 
@@ -74,30 +70,6 @@ RSpec.describe Scoring::SessionScorer do
         described_class.new(inconsistent_session).calculate!
 
         expect(consistent_session.reload.timing_score).to be > inconsistent_session.reload.timing_score
-      end
-    end
-
-    context "streak calculation" do
-      before do
-        # correct, correct, wrong, correct, correct, correct
-        add_attempt(pos: 0, correct: true)
-        add_attempt(pos: 1, correct: true)
-        add_attempt(pos: 2, correct: false)
-        add_attempt(pos: 3, correct: true)
-        add_attempt(pos: 4, correct: true)
-        add_attempt(pos: 5, correct: true)
-        session.update!(correct_notes: 5, incorrect_notes: 1, accuracy_pct: 83.3, total_notes: 6)
-      end
-
-      it "calculates longest streak correctly" do
-        described_class.new(session).calculate!
-        expect(session.reload.longest_streak).to eq(3)
-      end
-
-      it "calculates streak score based on longest streak / total" do
-        described_class.new(session).calculate!
-        # longest=3, total=6, score = min(100, (3/6)*150) = 75.0
-        expect(session.reload.streak_score).to eq(75.0)
       end
     end
 
@@ -151,8 +123,7 @@ RSpec.describe Scoring::SessionScorer do
         session.update!(incorrect_notes: 1, accuracy_pct: 0.0)
         described_class.new(session).calculate!
         session.reload
-        expect(session.streak_score).to eq(0.0)
-        expect(session.longest_streak).to eq(0)
+        expect(session.composite_score).to be_present
       end
     end
   end

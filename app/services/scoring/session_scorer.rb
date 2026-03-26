@@ -1,10 +1,9 @@
 module Scoring
   class SessionScorer
     WEIGHTS = {
-      accuracy: 0.40,
-      timing:   0.20,
-      streak:   0.20,
-      velocity: 0.20
+      accuracy: 0.50,
+      timing:   0.25,
+      velocity: 0.25
     }.freeze
 
     def initialize(practice_session)
@@ -13,19 +12,16 @@ module Scoring
     end
 
     def calculate!
-      acc   = accuracy_score
-      tim   = timing_score
-      strk  = streak_result
-      vel   = velocity_score
+      acc = accuracy_score
+      tim = timing_score
+      vel = velocity_score
 
-      composite = compute_composite(acc, tim, strk[:score], vel)
+      composite = compute_composite(acc, tim, vel)
 
       @session.update!(
         timing_score:    tim&.round(1),
-        streak_score:    strk[:score]&.round(1),
         velocity_score:  vel&.round(1),
-        composite_score: composite&.round(1),
-        longest_streak:  strk[:longest]
+        composite_score: composite&.round(1)
       )
     end
 
@@ -49,25 +45,6 @@ module Scoring
       [0.0, 100.0 - (relative_spread * 200.0)].max
     end
 
-    def streak_result
-      longest = 0
-      current = 0
-
-      @attempts.each do |attempt|
-        if attempt.correct?
-          current += 1
-          longest = current if current > longest
-        else
-          current = 0
-        end
-      end
-
-      total = @session.total_notes.to_i
-      score = total > 0 ? [100.0, (longest.to_f / total) * 150.0].min : 0.0
-
-      { score: score, longest: longest }
-    end
-
     def velocity_score
       pairs = @attempts.select(&:correct).select { |a|
         a.played_velocity.present? && a.expected_velocity.present?
@@ -82,16 +59,16 @@ module Scoring
       per_note_scores.sum / per_note_scores.size
     end
 
-    def compute_composite(accuracy, timing, streak, velocity)
+    def compute_composite(accuracy, timing, velocity)
       weights = WEIGHTS.dup
 
       if velocity.nil?
-        redistribution = weights[:velocity] / 3.0
+        redistribution = weights[:velocity] / 2.0
         weights.delete(:velocity)
         weights.each_key { |k| weights[k] += redistribution }
       end
 
-      scores = { accuracy: accuracy, timing: timing, streak: streak, velocity: velocity }.compact
+      scores = { accuracy: accuracy, timing: timing, velocity: velocity }.compact
       weights.sum { |dimension, weight| (scores[dimension] || 0.0) * weight }
     end
 

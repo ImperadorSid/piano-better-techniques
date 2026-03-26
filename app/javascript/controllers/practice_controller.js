@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // Listens for midi:noteon events dispatched by midi_controller.
 // Communicates with keyboard_controller via Stimulus Outlets.
 export default class extends Controller {
-  static targets = ["startButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay", "streakDisplay"]
+  static targets = ["startButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
   static outlets = ["keyboard"]
   static values  = {
     notes:       Array,
@@ -18,8 +18,6 @@ export default class extends Controller {
     this.started = false
     this.correctCount = 0
     this.incorrectCount = 0
-    this.currentStreak = 0
-    this.longestStreak = 0
     this.noteStartedAt = null
     this.boundHandleNote = this.handleNoteOn.bind(this)
     document.addEventListener("midi:noteon", this.boundHandleNote)
@@ -39,8 +37,6 @@ export default class extends Controller {
     this.currentIndexValue = 0
     this.correctCount = 0
     this.incorrectCount = 0
-    this.currentStreak = 0
-    this.longestStreak = 0
 
     if (this.hasStartButtonTarget) {
       this.startButtonTarget.style.display = "none"
@@ -76,13 +72,8 @@ export default class extends Controller {
 
     if (correct) {
       this.correctCount++
-      this.currentStreak++
-      if (this.currentStreak > this.longestStreak) {
-        this.longestStreak = this.currentStreak
-      }
       this.currentIndexValue++
       this.updateProgress()
-      this.updateStreak()
 
       if (this.currentIndexValue >= this.notesValue.length) {
         this.complete()
@@ -91,8 +82,6 @@ export default class extends Controller {
       }
     } else {
       this.incorrectCount++
-      this.currentStreak = 0
-      this.updateStreak()
     }
   }
 
@@ -126,12 +115,6 @@ export default class extends Controller {
     }
     if (this.hasProgressTextTarget) {
       this.progressTextTarget.textContent = `${reached} / ${total} notes`
-    }
-  }
-
-  updateStreak() {
-    if (this.hasStreakDisplayTarget) {
-      this.streakDisplayTarget.textContent = `Streak: ${this.currentStreak} · Best: ${this.longestStreak}`
     }
   }
 
