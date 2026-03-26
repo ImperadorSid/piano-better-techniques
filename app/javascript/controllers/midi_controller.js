@@ -22,7 +22,6 @@ export default class extends Controller {
       this.midiAccess = await navigator.requestMIDIAccess()
       this.setupInputs()
       this.midiAccess.onstatechange = () => this.setupInputs()
-      this.setStatus("Connected", true)
     } catch (err) {
       this.setStatus(`MIDI access denied: ${err.message}`, false)
     }
@@ -47,7 +46,7 @@ export default class extends Controller {
 
     const connected = inputs.length > 0
     this.setStatus(
-      connected ? `${inputs.length} device(s) connected` : "No MIDI devices found",
+      connected ? inputs.map(i => i.name).join(", ") : "No MIDI devices found",
       connected
     )
   }
