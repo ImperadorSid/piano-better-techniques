@@ -1,29 +1,32 @@
 <% content_for :title, "Dashboard — Piano Learner" %>
 
-<h1 style="margin-bottom:24px;">Dashboard</h1>
+<div style="margin-bottom:32px;">
+  <h1 style="margin:0 0 4px;font-size:2.5rem;font-weight:800;letter-spacing:-0.03em;">Dashboard</h1>
+  <p style="color:#666688;text-transform:uppercase;letter-spacing:0.15em;font-size:0.8rem;font-family:'Space Grotesk',sans-serif;margin:0;">Your Progress Overview</p>
+</div>
 
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;">
-  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;text-align:center;">
-    <div style="font-size:2rem;font-weight:bold;color:#7c7cff;"><%= @total_sessions %></div>
-    <div style="color:#888;font-size:0.85rem;">Sessions Completed</div>
+  <div class="neon-card" style="text-align:center;padding:24px;">
+    <div style="font-size:2.2rem;font-weight:800;color:#00f0ff;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 10px rgba(0,240,255,0.3);"><%= @total_sessions %></div>
+    <div style="color:#666688;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-top:4px;">Sessions</div>
   </div>
-  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;text-align:center;">
-    <div style="font-size:2rem;font-weight:bold;color:#7c7cff;"><%= @avg_accuracy %>%</div>
-    <div style="color:#888;font-size:0.85rem;">Avg Accuracy</div>
+  <div class="neon-card" style="text-align:center;padding:24px;">
+    <div style="font-size:2.2rem;font-weight:800;color:#ff00ff;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 10px rgba(255,0,255,0.3);"><%= @avg_accuracy %>%</div>
+    <div style="color:#666688;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-top:4px;">Avg Accuracy</div>
   </div>
-  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;text-align:center;">
-    <div style="font-size:2rem;font-weight:bold;color:#7c7cff;"><%= @avg_score %></div>
-    <div style="color:#888;font-size:0.85rem;">Avg Score</div>
+  <div class="neon-card" style="text-align:center;padding:24px;">
+    <div style="font-size:2.2rem;font-weight:800;color:#39ff14;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 10px rgba(57,255,20,0.3);"><%= @avg_score %></div>
+    <div style="color:#666688;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-top:4px;">Avg Score</div>
   </div>
-  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;text-align:center;">
-    <div style="font-size:2rem;font-weight:bold;color:#7c7cff;"><%= @songs_practiced %></div>
-    <div style="color:#888;font-size:0.85rem;">Songs Practiced</div>
+  <div class="neon-card" style="text-align:center;padding:24px;">
+    <div style="font-size:2.2rem;font-weight:800;color:#ffff00;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 10px rgba(255,255,0,0.3);"><%= @songs_practiced %></div>
+    <div style="color:#666688;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-top:4px;">Songs Practiced</div>
   </div>
 </div>
 
 <% if @accuracy_chart_data.any? %>
-  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;margin-bottom:32px;">
-    <h3 style="margin:0 0 16px;color:#b0b0dd;">Accuracy Over Time</h3>
+  <div class="neon-card" style="padding:24px;margin-bottom:32px;">
+    <h3 style="margin:0 0 16px;color:#a0a0cc;font-size:1rem;text-transform:uppercase;letter-spacing:0.08em;">Accuracy Over Time</h3>
     <div data-controller="progress-chart"
          data-progress-chart-sessions-value="<%= @accuracy_chart_data.to_json %>">
       <canvas id="accuracyChart" style="max-height:250px;"></canvas>
@@ -31,38 +34,46 @@
   </div>
 <% end %>
 
-<h3 style="margin-bottom:12px;color:#b0b0dd;">Recent Sessions</h3>
+<h3 style="margin-bottom:16px;color:#a0a0cc;font-size:1rem;text-transform:uppercase;letter-spacing:0.08em;">Recent Sessions</h3>
 <% if @recent_sessions.any? %>
-  <table style="width:100%;border-collapse:collapse;">
-    <thead>
-      <tr style="color:#888;font-size:0.85rem;text-align:left;border-bottom:1px solid #333;">
-        <th style="padding:8px 12px;">Song</th>
-        <th style="padding:8px 12px;">Date</th>
-        <th style="padding:8px 12px;">Accuracy</th>
-        <th style="padding:8px 12px;">Score</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @recent_sessions.first(5).each do |session| %>
-        <tr style="border-bottom:1px solid #222;">
-          <td style="padding:10px 12px;color:#e0e0ff;"><%= session.song.title %></td>
-          <td style="padding:10px 12px;color:#666;font-size:0.85rem;"><%= session.created_at.strftime("%b %d") %></td>
-          <td style="padding:10px 12px;">
-            <% acc = session.accuracy_pct.to_f %>
-            <span style="color:<%= acc >= 80 ? '#90ee90' : acc >= 50 ? '#eeee90' : '#ee9090' %>"><%= "#{acc.round(1)}%" %></span>
-          </td>
-          <td style="padding:10px 12px;">
-            <% if session.composite_score %>
-              <% cs = session.composite_score.to_f %>
-              <span style="color:<%= cs >= 80 ? '#90ee90' : cs >= 50 ? '#eeee90' : '#ee9090' %>"><%= cs.round(1) %></span>
-            <% else %>
-              <span style="color:#555;">—</span>
-            <% end %>
-          </td>
+  <div class="neon-card" style="padding:0;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid #2a2a44;">
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Song</th>
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Date</th>
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Accuracy</th>
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Score</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% @recent_sessions.first(5).each_with_index do |session, i| %>
+          <tr style="border-bottom:1px solid #1a1a2e;<%= i.even? ? 'background:#0d0d20;' : '' %>">
+            <td style="padding:14px 16px;color:#e0e0ff;font-weight:500;"><%= session.song.title %></td>
+            <td style="padding:14px 16px;font-size:0.85rem;">
+              <span style="color:#a0a0cc;font-weight:500;"><%= session.created_at.strftime("%b %d") %></span>
+              <span style="color:#a0a0cc;margin-left:6px;font-size:0.8rem;font-weight:300;font-family:monospace;"><%= session.created_at.strftime("%H:%M") %></span>
+            </td>
+            <td style="padding:14px 16px;">
+              <% acc = session.accuracy_pct.to_f %>
+              <span style="color:<%= acc >= 80 ? '#39ff14' : acc >= 50 ? '#ffff00' : '#ff2255' %>;font-weight:600;font-family:'Space Grotesk',sans-serif;<%= acc >= 80 ? 'text-shadow:0 0 6px rgba(57,255,20,0.4);' : '' %>"><%= "#{acc.round(1)}%" %></span>
+            </td>
+            <td style="padding:14px 16px;">
+              <% if session.composite_score %>
+                <% cs = session.composite_score.to_f %>
+                <span style="color:<%= cs >= 80 ? '#39ff14' : cs >= 50 ? '#ffff00' : '#ff2255' %>;font-weight:600;font-family:'Space Grotesk',sans-serif;<%= cs >= 80 ? 'text-shadow:0 0 6px rgba(57,255,20,0.4);' : '' %>"><%= cs.round(1) %></span>
+              <% else %>
+                <span style="color:#444466;">—</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 <% else %>
-  <p style="color:#888;">No sessions yet. <%= link_to "Start practicing!", songs_path, style: "color:#7c7cff;" %></p>
+  <div class="neon-card" style="text-align:center;padding:40px;">
+    <p style="color:#a0a0cc;">No sessions yet.</p>
+    <%= link_to "START PRACTICING", songs_path, class: "neon-btn-primary", style: "margin-top:12px;" %>
+  </div>
 <% end %>
