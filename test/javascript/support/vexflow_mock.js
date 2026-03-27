@@ -6,12 +6,6 @@ const mockContext = {
   setStrokeStyle: vi.fn().mockReturnThis(),
 }
 
-const mockRenderer = {
-  resize: vi.fn(),
-  getContext: vi.fn(() => mockContext),
-}
-
-
 const mockVoice = {
   setMode: vi.fn().mockReturnThis(),
   addTickables: vi.fn().mockReturnThis(),
@@ -23,7 +17,15 @@ const mockFormatter = {
   format: vi.fn().mockReturnThis(),
 }
 
-export function Renderer() { return mockRenderer }
+export function Renderer(container) {
+  // Create a real SVG element so querySelector("svg") works
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+  container.appendChild(svg)
+  return {
+    resize: vi.fn(),
+    getContext: vi.fn(() => mockContext),
+  }
+}
 Renderer.Backends = { SVG: 1 }
 
 export function Stave() {

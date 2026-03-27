@@ -7,10 +7,13 @@
 <h2 style="margin-bottom:4px;"><%= @song_part.song.title %></h2>
 <p style="color:#888;margin:0 0 24px;"><%= @song_part.name %> · <%= @song_part.note_count %> notes · <%= @song_part.song.tempo_bpm %> BPM</p>
 
+<% beats_per_measure = @song_part.song.time_signature&.split("/")&.first&.to_i || 4 %>
 <div data-controller="midi practice"
      data-practice-notes-value="<%= @song_part.notes.to_json %>"
      data-practice-session-id-value="<%= @session.id %>"
      data-practice-song-part-id-value="<%= @song_part.id %>"
+     data-practice-bpm-value="<%= @song_part.song.tempo_bpm %>"
+     data-practice-beats-per-measure-value="<%= beats_per_measure %>"
      data-practice-keyboard-outlet=".keyboard-wrapper"
      data-practice-staff-outlet=".staff-wrapper">
 
@@ -48,7 +51,6 @@
   </div>
 
   <%# Staff notation display %>
-  <% beats_per_measure = @song_part.song.time_signature&.split("/")&.first&.to_i || 4 %>
   <div class="staff-wrapper" data-controller="staff"
        data-staff-beats-per-measure-value="<%= beats_per_measure %>"
        style="background:white;border-radius:8px;margin-bottom:24px;min-height:150px;overflow:hidden;">

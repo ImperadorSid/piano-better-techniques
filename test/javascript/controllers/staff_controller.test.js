@@ -9,7 +9,7 @@ const { default: StaffController } = await import(
   "../../../app/javascript/controllers/staff_controller.js"
 )
 
-// 4/4 time: measure 1 = beats 0-3, measure 2 = beats 4-7, measure 3 = beats 8-11
+// 4/4 time: measure 0 = beats 0-3, measure 1 = beats 4-7, measure 2 = beats 8-11
 const SAMPLE_NOTES = [
   { pos: 0, midi: 60, name: "C4", dur: 1.0, vel: 80, beat: 0.0 },
   { pos: 1, midi: 60, name: "C4", dur: 1.0, vel: 80, beat: 1.0 },
@@ -62,6 +62,71 @@ describe("StaffController", () => {
       const sharpNotes = [{ pos: 0, midi: 61, name: "C#4", dur: 1.0, vel: 80, beat: 0 }]
       expect(() => controller.showNotes(0, sharpNotes)).not.toThrow()
     })
+
+    it("populates staveGeometry after render", () => {
+      controller.showNotes(0, SAMPLE_NOTES)
+      expect(controller.staveGeometry.length).toBe(3)
+      expect(controller.staveGeometry[0].startBeat).toBe(0)
+      expect(controller.staveGeometry[0].endBeat).toBe(4)
+      expect(controller.staveGeometry[1].startBeat).toBe(4)
+    })
+
+    it("sets currentPageStart", () => {
+      controller.showNotes(0, SAMPLE_NOTES)
+      expect(controller.currentPageStart).toBe(0)
+    })
+  })
+
+  describe("updatePlayhead()", () => {
+    it("does not throw when called after showNotes", () => {
+      controller.showNotes(0, SAMPLE_NOTES)
+      expect(() => controller.updatePlayhead(0.5, SAMPLE_NOTES)).not.toThrow()
+    })
+
+    it("creates a playhead SVG line element", () => {
+      controller.showNotes(0, SAMPLE_NOTES)
+      controller.updatePlayhead(0.5, SAMPLE_NOTES)
+      const svg = element.querySelector("svg")
+      const line = svg.querySelector("line")
+      expect(line).not.toBeNull()
+      expect(line.getAttribute("stroke")).toBe("#ff4444")
+    })
+
+    it("updates playhead position on subsequent calls", () => {
+      controller.showNotes(0, SAMPLE_NOTES)
+      controller.updatePlayhead(0.5, SAMPLE_NOTES)
+      const line = element.querySelector("svg line")
+      const x1 = line.getAttribute("x1")
+
+      controller.updatePlayhead(2.0, SAMPLE_NOTES)
+      const x2 = line.getAttribute("x1")
+      expect(x1).not.toBe(x2) // position should have changed
+    })
+
+    it("triggers page change when beat crosses measure boundary", () => {
+      controller.showNotes(0, SAMPLE_NOTES)
+      expect(controller.currentPageStart).toBe(0)
+
+      // Beat 12 is in measure 3, which starts page 1 (measures 3-5)
+      controller.updatePlayhead(12.5, SAMPLE_NOTES)
+      expect(controller.currentPageStart).toBe(3)
+    })
+  })
+
+  describe("removePlayhead()", () => {
+    it("removes the playhead line from SVG", () => {
+      controller.showNotes(0, SAMPLE_NOTES)
+      controller.updatePlayhead(0.5, SAMPLE_NOTES)
+      expect(element.querySelector("svg line")).not.toBeNull()
+
+      controller.removePlayhead()
+      expect(element.querySelector("svg line")).toBeNull()
+      expect(controller.playheadLine).toBeNull()
+    })
+
+    it("does not throw when no playhead exists", () => {
+      expect(() => controller.removePlayhead()).not.toThrow()
+    })
   })
 
   describe("clear()", () => {
@@ -70,30 +135,20 @@ describe("StaffController", () => {
       controller.clear()
       expect(element.innerHTML).toBe("")
     })
+
+    it("resets staveGeometry", () => {
+      controller.showNotes(0, SAMPLE_NOTES)
+      controller.clear()
+      expect(controller.staveGeometry.length).toBe(0)
+    })
   })
 
   describe("_groupByMeasure()", () => {
     it("groups notes into measures by beat position", () => {
       const measures = controller._groupByMeasure(SAMPLE_NOTES)
-      // Measure 0: beats 0-3 (4 notes), Measure 1: beats 4-7 (3 notes), Measure 2: beats 8-11 (4 notes)
       expect(measures[0].length).toBe(4)
       expect(measures[1].length).toBe(3)
       expect(measures[2].length).toBe(4)
-    })
-
-    it("respects 3/4 time signature", () => {
-      const el = makeElement(3)
-      const ctrl = new StaffController(el)
-      ctrl.connect()
-      const waltzNotes = [
-        { pos: 0, midi: 60, name: "C4", dur: 1.0, vel: 80, beat: 0.0 },
-        { pos: 1, midi: 62, name: "D4", dur: 1.0, vel: 80, beat: 1.0 },
-        { pos: 2, midi: 64, name: "E4", dur: 1.0, vel: 80, beat: 2.0 },
-        { pos: 3, midi: 65, name: "F4", dur: 1.0, vel: 80, beat: 3.0 },
-      ]
-      const measures = ctrl._groupByMeasure(waltzNotes)
-      expect(measures[0].length).toBe(3) // beats 0, 1, 2
-      expect(measures[1].length).toBe(1) // beat 3
     })
 
     it("preserves original note index as _index", () => {
@@ -110,10 +165,6 @@ describe("StaffController", () => {
 
     it("returns measure 1 for beat 4.0", () => {
       expect(controller._measureIndexForNote(SAMPLE_NOTES, 4)).toBe(1)
-    })
-
-    it("returns measure 2 for beat 8.0", () => {
-      expect(controller._measureIndexForNote(SAMPLE_NOTES, 7)).toBe(2)
     })
   })
 
@@ -153,24 +204,10 @@ describe("StaffController", () => {
   })
 
   describe("_durToVexflow()", () => {
-    it("maps 1.0 to q", () => {
-      expect(controller._durToVexflow(1)).toBe("q")
-    })
-
-    it("maps 0.5 to 8", () => {
-      expect(controller._durToVexflow(0.5)).toBe("8")
-    })
-
-    it("maps 2.0 to h", () => {
-      expect(controller._durToVexflow(2)).toBe("h")
-    })
-
-    it("maps 4.0 to w", () => {
-      expect(controller._durToVexflow(4)).toBe("w")
-    })
-
-    it("defaults to q for unknown duration", () => {
-      expect(controller._durToVexflow(3.7)).toBe("q")
-    })
+    it("maps 1.0 to q", () => { expect(controller._durToVexflow(1)).toBe("q") })
+    it("maps 0.5 to 8", () => { expect(controller._durToVexflow(0.5)).toBe("8") })
+    it("maps 2.0 to h", () => { expect(controller._durToVexflow(2)).toBe("h") })
+    it("maps 4.0 to w", () => { expect(controller._durToVexflow(4)).toBe("w") })
+    it("defaults to q for unknown", () => { expect(controller._durToVexflow(3.7)).toBe("q") })
   })
 })

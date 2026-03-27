@@ -5,7 +5,7 @@ const MEASURES_VISIBLE = 3
 const STAVE_HEIGHT = 120
 
 // Renders a mini staff notation display using VexFlow.
-// Shows 3 measures at a time with bar lines, highlighting the current note.
+// Shows 3 measures at a time with a sweeping vertical playhead line.
 // Consumed by practice_controller via Stimulus Outlets.
 export default class extends Controller {
   static values = {
@@ -13,7 +13,11 @@ export default class extends Controller {
   }
 
   connect() {
-    // Rendering is triggered by practice_controller calling showNotes()
+    this.staveGeometry = []
+    this.playheadLine = null
+    this.svgElement = null
+    this.currentPageStart = -1
+    this.allNotes = []
   }
 
   disconnect() {
@@ -21,15 +25,84 @@ export default class extends Controller {
   }
 
   showNotes(currentIndex, allNotes) {
+    this.allNotes = allNotes
     const measures = this._groupByMeasure(allNotes)
     const currentMeasureIndex = this._measureIndexForNote(allNotes, currentIndex)
     const { visibleMeasures, startMeasure } = this._computeVisibleMeasures(measures, currentMeasureIndex)
-    const activeNoteIndex = currentIndex
-    this._render(visibleMeasures, startMeasure, allNotes, activeNoteIndex)
+    this.currentPageStart = startMeasure
+    this._render(visibleMeasures, startMeasure, allNotes, currentIndex)
+  }
+
+  updatePlayhead(currentBeat, allNotes) {
+    if (!allNotes) allNotes = this.allNotes
+    const bpm = this.beatsPerMeasureValue
+    const measureIndex = Math.floor(currentBeat / bpm)
+
+    // Check if we need to change pages
+    const pageStart = Math.floor(measureIndex / MEASURES_VISIBLE) * MEASURES_VISIBLE
+    if (pageStart !== this.currentPageStart) {
+      const measures = this._groupByMeasure(allNotes)
+      const { visibleMeasures, startMeasure } = this._computeVisibleMeasures(measures, measureIndex)
+      this.currentPageStart = startMeasure
+      const activeIdx = this._noteIndexAtBeat(allNotes, currentBeat)
+      this._render(visibleMeasures, startMeasure, allNotes, activeIdx)
+    }
+
+    // Find the geometry entry for the current beat
+    const geo = this.staveGeometry.find(g => currentBeat >= g.startBeat && currentBeat < g.endBeat)
+    if (!geo) return
+
+    const frac = (currentBeat - geo.startBeat) / (geo.endBeat - geo.startBeat)
+    const pixelX = geo.x + frac * geo.width
+
+    this._ensurePlayhead()
+    this._updatePlayheadPosition(pixelX)
+  }
+
+  removePlayhead() {
+    if (this.playheadLine && this.playheadLine.parentNode) {
+      this.playheadLine.parentNode.removeChild(this.playheadLine)
+    }
+    this.playheadLine = null
   }
 
   clear() {
     this.element.innerHTML = ""
+    this.staveGeometry = []
+    this.playheadLine = null
+    this.svgElement = null
+    this.currentPageStart = -1
+  }
+
+  _ensurePlayhead() {
+    if (this.playheadLine && this.playheadLine.parentNode) return
+
+    if (!this.svgElement) {
+      this.svgElement = this.element.querySelector("svg")
+    }
+    if (!this.svgElement) return
+
+    this.playheadLine = document.createElementNS("http://www.w3.org/2000/svg", "line")
+    this.playheadLine.setAttribute("y1", "10")
+    this.playheadLine.setAttribute("y2", String(STAVE_HEIGHT - 10))
+    this.playheadLine.setAttribute("stroke", "#ff4444")
+    this.playheadLine.setAttribute("stroke-width", "2")
+    this.playheadLine.setAttribute("pointer-events", "none")
+    this.svgElement.appendChild(this.playheadLine)
+  }
+
+  _updatePlayheadPosition(pixelX) {
+    if (!this.playheadLine) return
+    this.playheadLine.setAttribute("x1", String(pixelX))
+    this.playheadLine.setAttribute("x2", String(pixelX))
+  }
+
+  _noteIndexAtBeat(allNotes, beat) {
+    for (let i = 0; i < allNotes.length; i++) {
+      const note = allNotes[i]
+      if (beat >= note.beat && beat < note.beat + note.dur) return i
+    }
+    return 0
   }
 
   _groupByMeasure(allNotes) {
@@ -40,7 +113,6 @@ export default class extends Controller {
       if (!measures[measureNum]) measures[measureNum] = []
       measures[measureNum].push({ ...note, _index: idx })
     })
-    // Fill any empty measures with empty arrays
     for (let i = 0; i < measures.length; i++) {
       if (!measures[i]) measures[i] = []
     }
@@ -54,8 +126,6 @@ export default class extends Controller {
   }
 
   _computeVisibleMeasures(measures, currentMeasureIndex) {
-    // Fixed pages of 3 measures: [0,1,2], [3,4,5], [6,7,8], etc.
-    // Only advances when the player finishes all notes in the current page.
     const start = Math.floor(currentMeasureIndex / MEASURES_VISIBLE) * MEASURES_VISIBLE
     const end = Math.min(start + MEASURES_VISIBLE, measures.length)
     return {
@@ -64,8 +134,10 @@ export default class extends Controller {
     }
   }
 
-  _render(visibleMeasures, startMeasure, allNotes, activeNoteIndex) {
+  _render(visibleMeasures, startMeasure, _allNotes, activeNoteIndex) {
     this.element.innerHTML = ""
+    this.playheadLine = null
+    this.staveGeometry = []
     if (visibleMeasures.length === 0) return
 
     const width = Math.max(this.element.clientWidth || 500, 300)
@@ -74,13 +146,26 @@ export default class extends Controller {
     renderer.resize(width, STAVE_HEIGHT)
     const context = renderer.getContext()
 
+    this.svgElement = this.element.querySelector("svg")
+
     const clefWidth = 50
     const totalStaveWidth = width - clefWidth
     const measureWidth = totalStaveWidth / visibleMeasures.length
+    const bpm = this.beatsPerMeasureValue
 
     visibleMeasures.forEach((measureNotes, i) => {
       const x = i === 0 ? 0 : clefWidth + measureWidth * i
       const w = i === 0 ? clefWidth + measureWidth : measureWidth
+      const measureIdx = startMeasure + i
+
+      // Store geometry for playhead positioning
+      this.staveGeometry.push({
+        measureIndex: measureIdx,
+        x: x,
+        width: w,
+        startBeat: measureIdx * bpm,
+        endBeat: (measureIdx + 1) * bpm
+      })
 
       const stave = new Stave(x, 10, w)
       if (i === 0) stave.addClef("treble")
@@ -110,7 +195,7 @@ export default class extends Controller {
       })
 
       const voice = new Voice({
-        num_beats: this.beatsPerMeasureValue,
+        num_beats: bpm,
         beat_value: 4
       })
       voice.setMode(Voice.Mode.SOFT)

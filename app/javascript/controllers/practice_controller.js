@@ -1,35 +1,45 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Core practice state machine.
-// Reads the note sequence from data-practice-notes-value (JSON array).
-// Listens for midi:noteon events dispatched by midi_controller.
-// Communicates with keyboard_controller via Stimulus Outlets.
+// BPM-based practice state machine.
+// Notes auto-advance based on timing. A vertical playhead sweeps the staff.
+// A count-in countdown plays one measure before the music starts.
+// MIDI input is evaluated against timing windows for accuracy scoring.
 export default class extends Controller {
   static targets = ["startButton", "restartButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
   static outlets = ["keyboard", "staff"]
   static values  = {
-    notes:       Array,
-    sessionId:   Number,
-    songPartId:  Number,
-    currentIndex: { type: Number, default: 0 }
+    notes:           Array,
+    sessionId:       Number,
+    songPartId:      Number,
+    bpm:             { type: Number, default: 120 },
+    beatsPerMeasure: { type: Number, default: 4 },
+    currentIndex:    { type: Number, default: 0 }
   }
 
   connect() {
     this.started = false
+    this.countInPhase = false
     this.correctCount = 0
     this.incorrectCount = 0
-    this.noteStartedAt = null
+    this.missedCount = 0
+    this.noteResults = new Map()
+    this.animFrameId = null
     this.boundHandleNote = this.handleNoteOn.bind(this)
     document.addEventListener("midi:noteon", this.boundHandleNote)
   }
 
   disconnect() {
     document.removeEventListener("midi:noteon", this.boundHandleNote)
+    if (this.animFrameId) cancelAnimationFrame(this.animFrameId)
+  }
+
+  get msPerBeat() {
+    return 60000 / this.bpmValue
   }
 
   start() {
     if (this.notesValue.length === 0) {
-      this.noteDisplayTarget.textContent = "No notes found."
+      if (this.hasNoteDisplayTarget) this.noteDisplayTarget.textContent = "No notes found."
       return
     }
 
@@ -37,82 +47,126 @@ export default class extends Controller {
     this.currentIndexValue = 0
     this.correctCount = 0
     this.incorrectCount = 0
+    this.missedCount = 0
+    this.noteResults = new Map()
+    this.lastDisplayedBeat = -1
 
-    if (this.hasStartButtonTarget) {
-      this.startButtonTarget.style.display = "none"
-    }
-    if (this.hasRestartButtonTarget) {
-      this.restartButtonTarget.style.display = "inline-block"
-    }
+    if (this.hasStartButtonTarget) this.startButtonTarget.style.display = "none"
+    if (this.hasRestartButtonTarget) this.restartButtonTarget.style.display = "inline-block"
+    if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "none"
 
-    this.showCurrentNote()
-  }
-
-  restart() {
-    this.started = false
-
-    if (this.hasScorePanelTarget) {
-      this.scorePanelTarget.style.display = "none"
-    }
+    // Render initial staff
     if (this.hasStaffOutlet) {
-      this.staffOutlet.clear()
-    }
-    if (this.hasRestartButtonTarget) {
-      this.restartButtonTarget.style.display = "none"
-    }
-    if (this.hasProgressBarTarget) {
-      this.progressBarTarget.style.width = "0%"
-    }
-    if (this.hasProgressTextTarget) {
-      this.progressTextTarget.textContent = `0 / ${this.notesValue.length} notes`
+      this.staffOutlet.showNotes(0, this.notesValue)
     }
 
-    this.start()
+    this.startCountIn()
   }
 
-  handleNoteOn(event) {
+  startCountIn() {
+    this.countInPhase = true
+    this.countInStartTime = performance.now()
+
+    if (this.hasNoteLabelTarget) this.noteLabelTarget.textContent = "Get ready..."
+
+    this.animFrameId = requestAnimationFrame(this.tick.bind(this))
+  }
+
+  tick() {
     if (!this.started) return
-    if (this.currentIndexValue >= this.notesValue.length) return
 
-    const { midi, velocity } = event.detail
-    const expected = this.notesValue[this.currentIndexValue]
-    const correct  = midi === expected.midi
-    const responseMs = this.noteStartedAt ? Date.now() - this.noteStartedAt : null
+    const now = performance.now()
 
-    // Flash keyboard
-    if (this.hasKeyboardOutlet) {
-      this.keyboardOutlet.flash(midi, correct)
+    if (this.countInPhase) {
+      this.tickCountIn(now)
+    } else {
+      this.tickPlayback(now)
     }
 
-    // Record attempt (fire-and-forget)
-    this.recordAttempt({
-      notePosition: expected.pos,
-      expectedMidi: expected.midi,
-      playedMidi:   midi,
-      correct,
-      responseMs,
-      playedVelocity:   velocity,
-      expectedVelocity: expected.vel
-    })
+    this.animFrameId = requestAnimationFrame(this.tick.bind(this))
+  }
 
-    if (correct) {
-      this.correctCount++
-      this.currentIndexValue++
-      this.updateProgress()
+  tickCountIn(now) {
+    const elapsed = now - this.countInStartTime
+    const beatIndex = Math.floor(elapsed / this.msPerBeat)
+    const totalCountInBeats = this.beatsPerMeasureValue
 
-      if (this.currentIndexValue >= this.notesValue.length) {
-        this.complete()
-      } else {
-        this.showCurrentNote()
-      }
-    } else {
-      this.incorrectCount++
+    if (beatIndex >= totalCountInBeats) {
+      // Count-in finished, begin playback
+      this.countInPhase = false
+      this.startTime = performance.now()
+      if (this.hasNoteLabelTarget) this.noteLabelTarget.textContent = ""
+      this.updateActiveNote(0)
+      return
+    }
+
+    // Display the current count beat
+    const displayBeat = beatIndex + 1
+    if (this.hasNoteDisplayTarget) {
+      this.noteDisplayTarget.textContent = String(displayBeat)
     }
   }
 
-  showCurrentNote() {
-    const note = this.notesValue[this.currentIndexValue]
-    if (!note) return
+  tickPlayback(now) {
+    const elapsedMs = now - this.startTime
+    const currentBeat = elapsedMs / this.msPerBeat
+
+    // Update playhead on staff
+    if (this.hasStaffOutlet) {
+      this.staffOutlet.updatePlayhead(currentBeat, this.notesValue)
+    }
+
+    // Check for missed notes
+    this.checkMissedNotes(currentBeat)
+
+    // Update active note display
+    this.updateActiveNote(currentBeat)
+
+    // Update progress
+    this.updateProgress(currentBeat)
+
+    // Check if past last note
+    const lastNote = this.notesValue[this.notesValue.length - 1]
+    const endBeat = lastNote.beat + lastNote.dur
+    if (currentBeat >= endBeat) {
+      this.complete()
+    }
+  }
+
+  activeNoteIndexAtBeat(beat) {
+    for (let i = 0; i < this.notesValue.length; i++) {
+      const note = this.notesValue[i]
+      if (beat >= note.beat && beat < note.beat + note.dur) return i
+    }
+    return -1
+  }
+
+  checkMissedNotes(currentBeat) {
+    for (let i = 0; i < this.notesValue.length; i++) {
+      const note = this.notesValue[i]
+      const noteEnd = note.beat + note.dur
+      if (noteEnd <= currentBeat && !this.noteResults.has(i)) {
+        this.noteResults.set(i, "missed")
+        this.missedCount++
+        this.recordAttempt({
+          notePosition: note.pos,
+          expectedMidi: note.midi,
+          playedMidi: 0,
+          correct: false,
+          responseMs: null,
+          playedVelocity: 0,
+          expectedVelocity: note.vel
+        })
+      }
+    }
+  }
+
+  updateActiveNote(currentBeat) {
+    const idx = this.activeNoteIndexAtBeat(currentBeat)
+    if (idx === -1 || idx === this.lastDisplayedBeat) return
+
+    this.lastDisplayedBeat = idx
+    const note = this.notesValue[idx]
 
     if (this.hasNoteDisplayTarget) {
       this.noteDisplayTarget.textContent = note.name
@@ -121,71 +175,121 @@ export default class extends Controller {
       const dynamics = this.velocityLabel(note.vel)
       this.noteLabelTarget.textContent = `MIDI ${note.midi} · ${dynamics}`
     }
-
-    // Update staff notation
-    if (this.hasStaffOutlet) {
-      this.staffOutlet.showNotes(this.currentIndexValue, this.notesValue)
-    }
-
-    this.noteStartedAt = Date.now()
   }
 
-  updateProgress() {
-    const total   = this.notesValue.length
-    const reached = this.currentIndexValue
-    const pct     = total > 0 ? (reached / total * 100).toFixed(1) : 0
+  updateProgress(currentBeat) {
+    const lastNote = this.notesValue[this.notesValue.length - 1]
+    const totalBeats = lastNote.beat + lastNote.dur
+    const pct = Math.min((currentBeat / totalBeats * 100), 100).toFixed(1)
 
     if (this.hasProgressBarTarget) {
       this.progressBarTarget.style.width = `${pct}%`
     }
     if (this.hasProgressTextTarget) {
-      this.progressTextTarget.textContent = `${reached} / ${total} notes`
+      const resolved = this.noteResults.size
+      this.progressTextTarget.textContent = `${resolved} / ${this.notesValue.length} notes`
     }
+  }
+
+  handleNoteOn(event) {
+    if (!this.started || this.countInPhase) return
+
+    const { midi, velocity } = event.detail
+    const currentBeat = (performance.now() - this.startTime) / this.msPerBeat
+    const idx = this.activeNoteIndexAtBeat(currentBeat)
+
+    if (idx === -1) return
+    if (this.noteResults.has(idx)) return
+
+    const expected = this.notesValue[idx]
+    const correct = midi === expected.midi
+    const responseMs = Math.round((performance.now() - this.startTime) - expected.beat * this.msPerBeat)
+
+    // Flash keyboard
+    if (this.hasKeyboardOutlet) {
+      this.keyboardOutlet.flash(midi, correct)
+    }
+
+    this.noteResults.set(idx, correct ? "correct" : "incorrect")
+    if (correct) {
+      this.correctCount++
+    } else {
+      this.incorrectCount++
+    }
+
+    this.recordAttempt({
+      notePosition: expected.pos,
+      expectedMidi: expected.midi,
+      playedMidi: midi,
+      correct,
+      responseMs,
+      playedVelocity: velocity,
+      expectedVelocity: expected.vel
+    })
   }
 
   complete() {
     this.started = false
-
-    if (this.hasStaffOutlet) {
-      this.staffOutlet.clear()
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId)
+      this.animFrameId = null
     }
 
-    // Notify Rails to finalize the session
+    // Mark any remaining notes as missed
+    for (let i = 0; i < this.notesValue.length; i++) {
+      if (!this.noteResults.has(i)) {
+        this.noteResults.set(i, "missed")
+        this.missedCount++
+      }
+    }
+
+    if (this.hasStaffOutlet) this.staffOutlet.removePlayhead()
+
+    // Notify Rails
     fetch(`/practice_sessions/${this.sessionIdValue}/complete`, {
       method: "PATCH",
       headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": document.querySelector('[name="csrf-token"]')?.content || ""
-      },
-      body: JSON.stringify({ notes_reached: this.currentIndexValue }),
-      headers: {
         "Accept": "text/vnd.turbo-stream.html, text/html",
         "X-CSRF-Token": document.querySelector('[name="csrf-token"]')?.content || ""
-      }
+      },
+      body: JSON.stringify({ notes_reached: this.notesValue.length }),
     })
     .then(r => r.text())
     .then(html => {
-      const total = this.correctCount + this.incorrectCount
-      const acc   = total > 0 ? ((this.correctCount / total) * 100).toFixed(1) : "0.0"
+      const total = this.notesValue.length
+      const acc = total > 0 ? ((this.correctCount / total) * 100).toFixed(1) : "0.0"
 
-      if (this.hasScorePanelTarget) {
-        this.scorePanelTarget.style.display = "block"
-      }
-      if (this.hasAccuracyDisplayTarget) {
-        this.accuracyDisplayTarget.textContent = `${acc}%`
-      }
-      if (this.hasNoteDisplayTarget) {
-        this.noteDisplayTarget.textContent = "🎉"
-      }
+      if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "block"
+      if (this.hasAccuracyDisplayTarget) this.accuracyDisplayTarget.textContent = `${acc}%`
+      if (this.hasNoteDisplayTarget) this.noteDisplayTarget.textContent = "🎉"
       if (this.hasNoteLabelTarget) {
-        this.noteLabelTarget.textContent = "Session complete!"
+        this.noteLabelTarget.textContent = `${this.correctCount} correct · ${this.incorrectCount} wrong · ${this.missedCount} missed`
       }
 
       Turbo.renderStreamMessage(html)
     })
-    .catch(() => {
-      // Silently ignore network errors — local score panel still shows
-    })
+    .catch(() => {})
+  }
+
+  restart() {
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId)
+      this.animFrameId = null
+    }
+    this.started = false
+
+    if (this.hasStaffOutlet) {
+      this.staffOutlet.removePlayhead()
+      this.staffOutlet.clear()
+    }
+    if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "none"
+    if (this.hasRestartButtonTarget) this.restartButtonTarget.style.display = "none"
+    if (this.hasProgressBarTarget) this.progressBarTarget.style.width = "0%"
+    if (this.hasProgressTextTarget) {
+      this.progressTextTarget.textContent = `0 / ${this.notesValue.length} notes`
+    }
+
+    this.start()
   }
 
   recordAttempt({ notePosition, expectedMidi, playedMidi, correct, responseMs, playedVelocity, expectedVelocity }) {
@@ -206,7 +310,7 @@ export default class extends Controller {
           expected_velocity: expectedVelocity
         }
       })
-    }).catch(() => {})  // fire-and-forget
+    }).catch(() => {})
   }
 
   velocityLabel(velocity) {
