@@ -1,57 +1,65 @@
 <% content_for :title, "Practice History — Piano Learner" %>
 
-<h1 style="margin-bottom:24px;">Practice History</h1>
+<div style="margin-bottom:32px;">
+  <h1 style="margin:0 0 4px;font-size:2.5rem;font-weight:800;letter-spacing:-0.03em;">Practice History</h1>
+  <p style="color:#666688;text-transform:uppercase;letter-spacing:0.15em;font-size:0.8rem;font-family:'Space Grotesk',sans-serif;margin:0;">Your Performance Log</p>
+</div>
 
 <% if @sessions.empty? %>
-  <div style="text-align:center;padding:60px;color:#888;">
-    <p>No practice sessions yet.</p>
-    <%= link_to "Start Practicing", songs_path, style: "color:#7c7cff;" %>
+  <div class="neon-card" style="text-align:center;padding:60px;">
+    <p style="color:#a0a0cc;font-size:1.1rem;">No practice sessions yet.</p>
+    <%= link_to "START PRACTICING", songs_path, class: "neon-btn-primary", style: "margin-top:16px;" %>
   </div>
 <% else %>
-  <table style="width:100%;border-collapse:collapse;">
-    <thead>
-      <tr style="color:#888;font-size:0.85rem;text-align:left;border-bottom:1px solid #333;">
-        <th style="padding:8px 12px;">Song</th>
-        <th style="padding:8px 12px;">Part</th>
-        <th style="padding:8px 12px;">Date</th>
-        <th style="padding:8px 12px;">Notes</th>
-        <th style="padding:8px 12px;">Accuracy</th>
-        <th style="padding:8px 12px;">Score</th>
-        <th style="padding:8px 12px;">Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @sessions.each do |session| %>
-        <tr style="border-bottom:1px solid #222;">
-          <td style="padding:12px;color:#e0e0ff;"><%= session.song.title %></td>
-          <td style="padding:12px;color:#888;"><%= session.song_part.name %></td>
-          <td style="padding:12px;color:#666;font-size:0.85rem;"><%= session.created_at.strftime("%b %d, %Y %H:%M") %></td>
-          <td style="padding:12px;color:#888;"><%= session.notes_reached %> / <%= session.total_notes %></td>
-          <td style="padding:12px;">
-            <% acc = session.accuracy_pct.to_f %>
-            <span style="color:<%= acc >= 80 ? '#90ee90' : acc >= 50 ? '#eeee90' : '#ee9090' %>">
-              <%= session.completed ? "#{acc.round(1)}%" : "—" %>
-            </span>
-          </td>
-          <td style="padding:12px;">
-            <% if session.completed && session.composite_score %>
-              <% cs = session.composite_score.to_f %>
-              <span style="color:<%= cs >= 80 ? '#90ee90' : cs >= 50 ? '#eeee90' : '#ee9090' %>">
-                <%= cs.round(1) %>
-              </span>
-            <% else %>
-              <span style="color:#555;">—</span>
-            <% end %>
-          </td>
-          <td style="padding:12px;">
-            <% if session.completed %>
-              <span style="color:#90ee90;font-size:0.85rem;">✓ Done</span>
-            <% else %>
-              <span style="color:#888;font-size:0.85rem;">In progress</span>
-            <% end %>
-          </td>
+  <div class="neon-card" style="padding:0;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid #2a2a44;">
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Song</th>
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Part</th>
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Date</th>
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Notes</th>
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Accuracy</th>
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Score</th>
+          <th style="padding:14px 16px;color:#666688;font-size:0.75rem;text-align:left;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.1em;">Status</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% @sessions.each_with_index do |session, i| %>
+          <tr style="border-bottom:1px solid #1a1a2e;<%= i.even? ? 'background:#0d0d20;' : '' %>">
+            <td style="padding:14px 16px;color:#e0e0ff;font-weight:500;"><%= session.song.title %></td>
+            <td style="padding:14px 16px;color:#a0a0cc;font-size:0.9rem;"><%= session.song_part.name %></td>
+            <td style="padding:14px 16px;font-size:0.85rem;">
+              <span style="color:#a0a0cc;font-weight:500;"><%= session.created_at.strftime("%b %d, %Y") %></span>
+              <span style="color:#a0a0cc;margin-left:6px;font-size:0.8rem;font-weight:300;font-family:monospace;"><%= session.created_at.strftime("%H:%M") %></span>
+            </td>
+            <td style="padding:14px 16px;color:#a0a0cc;font-size:0.9rem;"><%= session.notes_reached %> / <%= session.total_notes %></td>
+            <td style="padding:14px 16px;">
+              <% acc = session.accuracy_pct.to_f %>
+              <span style="color:<%= acc >= 80 ? '#39ff14' : acc >= 50 ? '#ffff00' : '#ff2255' %>;font-weight:600;font-family:'Space Grotesk',sans-serif;<%= acc >= 80 ? 'text-shadow:0 0 6px rgba(57,255,20,0.4);' : '' %>">
+                <%= session.completed ? "#{acc.round(1)}%" : "—" %>
+              </span>
+            </td>
+            <td style="padding:14px 16px;">
+              <% if session.completed && session.composite_score %>
+                <% cs = session.composite_score.to_f %>
+                <span style="color:<%= cs >= 80 ? '#39ff14' : cs >= 50 ? '#ffff00' : '#ff2255' %>;font-weight:600;font-family:'Space Grotesk',sans-serif;<%= cs >= 80 ? 'text-shadow:0 0 6px rgba(57,255,20,0.4);' : '' %>">
+                  <%= cs.round(1) %>
+                </span>
+              <% else %>
+                <span style="color:#444466;">—</span>
+              <% end %>
+            </td>
+            <td style="padding:14px 16px;">
+              <% if session.completed %>
+                <span style="color:#39ff14;font-size:0.8rem;font-family:'Space Grotesk',sans-serif;font-weight:600;text-shadow:0 0 6px rgba(57,255,20,0.4);">✓ DONE</span>
+              <% else %>
+                <span style="color:#a0a0cc;font-size:0.8rem;font-family:'Space Grotesk',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">IN PROGRESS</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 <% end %>
