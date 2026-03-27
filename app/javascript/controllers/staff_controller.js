@@ -76,6 +76,8 @@ export default class extends Controller {
     this.playheadLine = null
     this.svgElement = null
     this.currentPageStart = -1
+    this.noteResults = null
+    this._lastResultsCount = 0
   }
 
   _ensurePlayhead() {

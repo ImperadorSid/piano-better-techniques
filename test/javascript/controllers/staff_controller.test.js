@@ -141,6 +141,13 @@ describe("StaffController", () => {
       controller.clear()
       expect(controller.staveGeometry.length).toBe(0)
     })
+
+    it("resets noteResults so notes render without colors", () => {
+      controller.noteResults = new Map([[0, "correct"], [1, "missed"]])
+      controller.clear()
+      expect(controller.noteResults).toBeNull()
+      expect(controller._lastResultsCount).toBe(0)
+    })
   })
 
   describe("_groupByMeasure()", () => {
