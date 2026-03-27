@@ -1,9 +1,12 @@
 import { vi } from "vitest"
 
-const Chart = vi.fn().mockImplementation(() => ({
-  destroy: vi.fn(),
-  update: vi.fn(),
-  data: { labels: [], datasets: [] }
-}))
+const _Chart = vi.fn(function() {
+  this.destroy = vi.fn()
+  this.update = vi.fn()
+  this.data = { labels: [], datasets: [] }
+})
 
-export default Chart
+_Chart.register = vi.fn()
+
+export { _Chart as Chart }
+export const registerables = []

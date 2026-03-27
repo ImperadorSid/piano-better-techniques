@@ -5,15 +5,8 @@ vi.mock("@hotwired/stimulus", async () => {
   return { Controller }
 })
 
-// Mock Chart.js since it requires canvas rendering which jsdom doesn't fully support
-vi.mock("chart.js", () => ({
-  default: vi.fn().mockImplementation(class MockChart {
-    constructor() { this.destroy = vi.fn() }
-  })
-}))
-
 const { default: ProgressChartController } = await import("../../../app/javascript/controllers/progress_chart_controller.js")
-import Chart from "chart.js"
+import { Chart } from "chart.js"
 
 describe("ProgressChartController", () => {
   let element

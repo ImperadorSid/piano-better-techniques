@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
-import Chart from "chart.js"
+import { Chart, registerables } from "chart.js"
+Chart.register(...registerables)
 
 // Renders a Chart.js accuracy-over-time line chart.
 // Data passed via data-progress-chart-sessions-value (JSON array of {date, accuracy}).
@@ -28,11 +29,15 @@ export default class extends Controller {
         datasets: [{
           label: "Accuracy %",
           data: this.sessionsValue.map(s => s.accuracy),
-          borderColor: "#7c7cff",
-          backgroundColor: "rgba(124, 124, 255, 0.1)",
+          borderColor: "#ff00ff",
+          backgroundColor: "rgba(255, 0, 255, 0.08)",
           tension: 0.3,
           fill: true,
-          pointBackgroundColor: "#7c7cff"
+          pointBackgroundColor: "#00f0ff",
+          pointBorderColor: "#00f0ff",
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2
         }]
       },
       options: {
@@ -40,16 +45,16 @@ export default class extends Controller {
           y: {
             min: 0,
             max: 100,
-            ticks: { color: "#888" },
-            grid: { color: "#222" }
+            ticks: { color: "#666688" },
+            grid: { color: "#1a1a2e" }
           },
           x: {
-            ticks: { color: "#888" },
-            grid: { color: "#222" }
+            ticks: { color: "#666688" },
+            grid: { color: "#1a1a2e" }
           }
         },
         plugins: {
-          legend: { labels: { color: "#b0b0dd" } }
+          legend: { labels: { color: "#a0a0cc" } }
         }
       }
     })
