@@ -264,6 +264,12 @@ export default class extends Controller {
       this.staffOutlet.clear()
     }
     if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "none"
+    if (this.hasResultDisplayTarget) this.resultDisplayTarget.style.display = "none"
+    // Remove server-rendered session complete card and restore empty turbo frame
+    const sessionCard = document.getElementById("session_complete")
+    if (sessionCard) {
+      sessionCard.replaceWith(Object.assign(document.createElement("turbo-frame"), { id: "session_complete" }))
+    }
     if (this.hasRestartButtonTarget) this.restartButtonTarget.style.display = "none"
     if (this.hasProgressBarTarget) this.progressBarTarget.style.width = "0%"
     if (this.hasProgressTextTarget) {

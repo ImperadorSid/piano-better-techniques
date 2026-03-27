@@ -242,6 +242,38 @@ describe("PracticeController", () => {
       expect(controller.correctCount).toBe(0)
       expect(controller.noteResults.size).toBe(0)
     })
+
+    it("hides the score panel", () => {
+      const panel = element.querySelector("[data-practice-target='scorePanel']")
+      panel.style.display = "block"
+      controller.start()
+      controller.restart()
+      expect(panel.style.display).toBe("none")
+    })
+
+    it("hides the result display", () => {
+      const result = element.querySelector("[data-practice-target='resultDisplay']")
+      result.style.display = "block"
+      controller.start()
+      controller.restart()
+      expect(result.style.display).toBe("none")
+    })
+
+    it("removes the server-rendered session complete card", () => {
+      // Simulate the server-rendered card (replaces the turbo-frame)
+      const card = document.createElement("div")
+      card.id = "session_complete"
+      card.innerHTML = "<h3>Session Complete!</h3>"
+      element.appendChild(card)
+
+      controller.start()
+      controller.restart()
+
+      // Card should be replaced with an empty turbo-frame
+      const replaced = document.getElementById("session_complete")
+      expect(replaced.tagName).toBe("TURBO-FRAME")
+      expect(replaced.innerHTML).toBe("")
+    })
   })
 
   describe("velocityLabel()", () => {
