@@ -89,7 +89,7 @@ describe("StaffController", () => {
       const svg = element.querySelector("svg")
       const line = svg.querySelector("line")
       expect(line).not.toBeNull()
-      expect(line.getAttribute("stroke")).toBe("#ff4444")
+      expect(line.getAttribute("stroke")).toBe("#ff00ff")
     })
 
     it("updates playhead position on subsequent calls", () => {

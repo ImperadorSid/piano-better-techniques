@@ -26,7 +26,7 @@ export default class extends Controller {
   render() {
     this.element.innerHTML = ""
     const wrapper = document.createElement("div")
-    wrapper.style.cssText = "position:relative;display:flex;height:180px;background:#111;border-radius:8px;overflow:hidden;padding:8px;justify-content:center;"
+    wrapper.style.cssText = "position:relative;display:flex;height:180px;background:#0a0a1a;border-radius:8px;overflow:hidden;padding:8px;justify-content:center;border:1px solid #2a2a44;"
 
     const start = this.constructor.rangeStart
     const end   = this.constructor.rangeEnd
@@ -46,14 +46,14 @@ export default class extends Controller {
 
     whiteKeys.forEach(midi => {
       const key = document.createElement("div")
-      key.style.cssText = "flex:1;background:white;border-right:1px solid #ccc;border-bottom:1px solid #999;border-radius:0 0 4px 4px;cursor:default;position:relative;box-sizing:border-box;"
+      key.style.cssText = "flex:1;background:#e8e8f0;border-right:1px solid #c0c0d0;border-bottom:1px solid #a0a0b0;border-radius:0 0 4px 4px;cursor:default;position:relative;box-sizing:border-box;"
       key.dataset.midi = midi
 
       // Label C keys with octave number
       if (midi % 12 === 0) {
         const label = document.createElement("span")
         label.textContent = midiToName(midi)
-        label.style.cssText = "position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:10px;color:#999;pointer-events:none;user-select:none;"
+        label.style.cssText = "position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:10px;color:#666688;pointer-events:none;user-select:none;font-family:'Space Grotesk',sans-serif;"
         key.appendChild(label)
       }
 
@@ -81,8 +81,8 @@ export default class extends Controller {
           top:0;
           width:${blackKeyWidth.toFixed(2)}%;
           height:60%;
-          background:#222;
-          border:1px solid #555;
+          background:#1a1a2e;
+          border:1px solid #2a2a44;
           border-radius:0 0 3px 3px;
           z-index:2;
           cursor:default;
@@ -103,21 +103,25 @@ export default class extends Controller {
     const key = this.keys[midi]
     if (key) {
       key.dataset.highlighted = "true"
-      key.style.background = isBlackKey(midi) ? "#2244aa" : "#aabbff"
+      key.style.background = isBlackKey(midi) ? "#1a0a3a" : "#cc99ff"
     }
   }
 
-  // Flash a key green (correct) or red (wrong) briefly
+  // Flash a key neon green (correct) or neon red (wrong) briefly
   flash(midi, correct) {
     const key = this.keys[midi]
     if (!key) return
-    const color = correct
-      ? (isBlackKey(midi) ? "#1a5a1a" : "#90ee90")
-      : (isBlackKey(midi) ? "#5a1a1a" : "#ee9090")
-
-    key.style.background = color
+    const black = isBlackKey(midi)
+    if (correct) {
+      key.style.background = black ? "#0a5a0a" : "#39ff14"
+      key.style.boxShadow = "0 0 12px rgba(57,255,20,0.6), inset 0 0 8px rgba(57,255,20,0.2)"
+    } else {
+      key.style.background = black ? "#4a0a1a" : "#ff2255"
+      key.style.boxShadow = "0 0 8px rgba(255,34,85,0.4)"
+    }
     setTimeout(() => {
-      key.style.background = isBlackKey(midi) ? "#222" : "white"
+      key.style.background = black ? "#1a1a2e" : "#e8e8f0"
+      key.style.boxShadow = "none"
     }, 400)
   }
 
@@ -125,7 +129,7 @@ export default class extends Controller {
     Object.entries(this.keys).forEach(([midi, key]) => {
       delete key.dataset.highlighted
       if (key.dataset.pressed !== "true") {
-        key.style.background = isBlackKey(Number(midi)) ? "#222" : "white"
+        key.style.background = isBlackKey(Number(midi)) ? "#1a1a2e" : "#e8e8f0"
       }
     })
   }
@@ -143,9 +147,9 @@ export default class extends Controller {
     if (!key) return
     delete key.dataset.pressed
     if (key.dataset.highlighted === "true") {
-      key.style.background = isBlackKey(midi) ? "#2244aa" : "#aabbff"
+      key.style.background = isBlackKey(midi) ? "#1a0a3a" : "#cc99ff"
     } else {
-      key.style.background = isBlackKey(midi) ? "#222" : "white"
+      key.style.background = isBlackKey(midi) ? "#1a1a2e" : "#e8e8f0"
     }
   }
 }

@@ -1,11 +1,11 @@
 <% content_for :title, "Practice — #{@song_part.song.title}" %>
 
 <div style="margin-bottom:16px;">
-  <%= link_to "← Back to Song", song_path(@song_part.song), style: "color:#888;text-decoration:none;" %>
+  <%= link_to "← Back to Song", song_path(@song_part.song), style: "color:#666688;text-decoration:none;font-size:0.9rem;font-family:'Space Grotesk',sans-serif;" %>
 </div>
 
-<h2 style="margin-bottom:4px;"><%= @song_part.song.title %></h2>
-<p style="color:#888;margin:0 0 24px;"><%= @song_part.name %> · <%= @song_part.note_count %> notes · <%= @song_part.song.tempo_bpm %> BPM</p>
+<h2 style="margin-bottom:4px;font-size:1.6rem;font-weight:700;letter-spacing:-0.01em;"><%= @song_part.song.title %></h2>
+<p style="color:#666688;margin:0 0 24px;font-family:'Space Grotesk',sans-serif;font-size:0.9rem;"><%= @song_part.name %> · <%= @song_part.note_count %> notes · <%= @song_part.song.tempo_bpm %> BPM</p>
 
 <% beats_per_measure = @song_part.song.time_signature&.split("/")&.first&.to_i || 4 %>
 <div data-controller="midi practice"
@@ -18,39 +18,39 @@
      data-practice-staff-outlet=".staff-wrapper">
 
   <%# Control panel %>
-  <div style="background:#111;border:1px solid #333;border-radius:8px;padding:24px;text-align:center;margin-bottom:24px;">
-    <div style="font-size:2.5rem;color:#7c7cff;min-height:3rem;" data-practice-target="countDisplay"></div>
-    <p style="color:#888;margin:8px 0 0;font-size:0.85rem;display:none;" data-practice-target="resultDisplay"></p>
+  <div class="neon-card" style="text-align:center;padding:24px;margin-bottom:24px;">
+    <div style="font-size:2.5rem;color:#00f0ff;min-height:3rem;font-family:'Space Grotesk',sans-serif;font-weight:700;text-shadow:0 0 12px rgba(0,240,255,0.4);" data-practice-target="countDisplay"></div>
+    <p style="color:#a0a0cc;margin:8px 0 0;font-size:0.85rem;display:none;" data-practice-target="resultDisplay"></p>
 
-    <div style="margin-top:16px;">
+    <div style="margin-top:16px;display:flex;justify-content:center;gap:12px;">
       <button data-action="click->practice#start"
               data-practice-target="startButton"
-              style="background:#5555ff;color:white;padding:12px 32px;border-radius:8px;border:none;cursor:pointer;font-size:1rem;">
-        Start Practice
+              class="neon-btn-primary">
+        START PRACTICE
       </button>
       <button data-action="click->practice#restart"
               data-practice-target="restartButton"
-              style="display:none;background:#444;color:white;padding:10px 24px;border-radius:8px;border:none;cursor:pointer;font-size:0.9rem;margin-left:8px;">
-        Restart
+              class="neon-btn-secondary"
+              style="display:none;">
+        RESTART
       </button>
     </div>
 
-    <div style="margin-top:16px;">
-      <div style="background:#222;border-radius:4px;height:8px;overflow:hidden;">
+    <div style="margin-top:20px;">
+      <div style="background:#1a1a2e;border-radius:4px;height:6px;overflow:hidden;">
         <div data-practice-target="progressBar"
-             style="background:#5555ff;height:100%;width:0%;transition:width 0.2s;"></div>
+             style="background:linear-gradient(90deg,#ff00ff,#00f0ff);height:100%;width:0%;transition:width 0.2s;border-radius:4px;"></div>
       </div>
-      <p style="color:#666;font-size:0.8rem;margin:6px 0 0;" data-practice-target="progressText">
+      <p style="color:#666688;font-size:0.8rem;margin:8px 0 0;font-family:'Space Grotesk',sans-serif;" data-practice-target="progressText">
         0 / <%= @song_part.note_count %> notes
       </p>
-
     </div>
   </div>
 
   <%# Staff notation display %>
   <div class="staff-wrapper" data-controller="staff"
        data-staff-beats-per-measure-value="<%= beats_per_measure %>"
-       style="background:white;border-radius:8px;margin-bottom:24px;min-height:150px;overflow:hidden;">
+       style="background:#111128;border:1px solid #2a2a44;border-radius:8px;margin-bottom:24px;min-height:150px;overflow:hidden;">
   </div>
 
   <%# Virtual keyboard %>
@@ -58,7 +58,7 @@
 
   <%# MIDI status %>
   <div style="text-align:center;margin-bottom:16px;">
-    <span data-midi-target="status" style="color:#888;font-size:0.85rem;">MIDI: Not connected</span>
+    <span data-midi-target="status" style="color:#666688;font-size:0.8rem;font-family:'Space Grotesk',sans-serif;">MIDI: Not connected</span>
   </div>
 
   <%# Session complete Turbo Frame (populated by server on completion) %>

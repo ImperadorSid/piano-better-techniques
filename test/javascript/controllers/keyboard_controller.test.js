@@ -79,7 +79,7 @@ describe("KeyboardController", () => {
       controller.highlight(60)
       const key = element.querySelector("[data-midi='60']")
       expect(key).not.toBeNull()
-      expect(key.style.background).not.toBe("white")
+      expect(key.style.background).not.toBe("#e8e8f0")
     })
 
     it("marks highlighted key with data attribute", () => {
@@ -119,7 +119,7 @@ describe("KeyboardController", () => {
       controller.release(60)
       const key = element.querySelector("[data-midi='60']")
       expect(key.dataset.pressed).toBeUndefined()
-      expect(key.style.background).toBe("white")
+      expect(key.style.background).toBe("rgb(232, 232, 240)")
     })
 
     it("does not throw for a MIDI note outside the rendered range", () => {
@@ -132,13 +132,13 @@ describe("KeyboardController", () => {
     it("temporarily changes key color on correct note", () => {
       const key = element.querySelector("[data-midi='60']")
       controller.flash(60, true)
-      expect(key.style.background).not.toBe("white")
+      expect(key.style.background).not.toBe("#e8e8f0")
     })
 
     it("temporarily changes key color on incorrect note", () => {
       const key = element.querySelector("[data-midi='60']")
       controller.flash(60, false)
-      expect(key.style.background).not.toBe("white")
+      expect(key.style.background).not.toBe("#e8e8f0")
     })
 
     it("does not throw for unknown MIDI note", () => {

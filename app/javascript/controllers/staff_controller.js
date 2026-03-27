@@ -96,9 +96,10 @@ export default class extends Controller {
     this.playheadLine = document.createElementNS("http://www.w3.org/2000/svg", "line")
     this.playheadLine.setAttribute("y1", "10")
     this.playheadLine.setAttribute("y2", String(STAVE_HEIGHT - 10))
-    this.playheadLine.setAttribute("stroke", "#ff4444")
+    this.playheadLine.setAttribute("stroke", "#ff00ff")
     this.playheadLine.setAttribute("stroke-width", "2")
     this.playheadLine.setAttribute("pointer-events", "none")
+    this.playheadLine.setAttribute("filter", "drop-shadow(0 0 4px rgba(255,0,255,0.6))")
     this.svgElement.appendChild(this.playheadLine)
   }
 
@@ -156,6 +157,9 @@ export default class extends Controller {
     const renderer = new Renderer(this.element, Renderer.Backends.SVG)
     renderer.resize(width, STAVE_HEIGHT)
     const context = renderer.getContext()
+    // Style stave lines for dark background
+    context.setStrokeStyle("#3a3a5a")
+    context.setFillStyle("#3a3a5a")
 
     this.svgElement = this.element.querySelector("svg")
 
@@ -198,11 +202,11 @@ export default class extends Controller {
 
         const result = this.noteResults && this.noteResults.get(note._index)
         if (result === "correct") {
-          sn.setStyle({ fillStyle: "#4CAF50", strokeStyle: "#4CAF50" })
+          sn.setStyle({ fillStyle: "#39ff14", strokeStyle: "#39ff14", shadowColor: "#39ff14", shadowBlur: 8 })
         } else if (result === "incorrect" || result === "missed") {
-          sn.setStyle({ fillStyle: "#f44336", strokeStyle: "#f44336" })
+          sn.setStyle({ fillStyle: "#ff225588", strokeStyle: "#ff225588" })
         } else {
-          sn.setStyle({ fillStyle: "#333", strokeStyle: "#333" })
+          sn.setStyle({ fillStyle: "#a0a0cc", strokeStyle: "#a0a0cc" })
         }
 
         return sn
