@@ -230,10 +230,15 @@ export default class extends Controller {
     fetch(`/practice_sessions/${this.sessionIdValue}/complete`, {
       method: "PATCH",
       headers: {
+        "Content-Type": "application/json",
         "Accept": "text/vnd.turbo-stream.html, text/html",
         "X-CSRF-Token": document.querySelector('[name="csrf-token"]')?.content || ""
       },
-      body: JSON.stringify({ notes_reached: this.notesValue.length }),
+      body: JSON.stringify({
+        notes_reached: this.notesValue.length,
+        correct_notes: this.correctCount,
+        incorrect_notes: this.incorrectCount + this.missedCount
+      }),
     })
     .then(r => r.text())
     .then(html => {

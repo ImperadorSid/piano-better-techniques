@@ -104,5 +104,22 @@ RSpec.describe PracticeSession, type: :model do
       session.complete!(notes_reached: 10)
       expect(session.reload.notes_reached).to eq(10)
     end
+
+    it "uses client-provided counts when given (overrides accumulated counters)" do
+      # Simulate accumulated counters from multiple restarts
+      session.update!(correct_notes: 50, incorrect_notes: 100)
+      session.complete!(notes_reached: 10, correct_notes: 4, incorrect_notes: 6)
+      session.reload
+      expect(session.correct_notes).to eq(4)
+      expect(session.incorrect_notes).to eq(6)
+      expect(session.accuracy_pct).to eq(40.0)
+    end
+
+    it "falls back to accumulated counters when client counts not provided" do
+      session.complete!(notes_reached: 10)
+      session.reload
+      expect(session.correct_notes).to eq(3)
+      expect(session.incorrect_notes).to eq(7)
+    end
   end
 end

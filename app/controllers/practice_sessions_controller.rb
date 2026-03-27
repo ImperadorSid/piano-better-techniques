@@ -19,8 +19,11 @@ class PracticeSessionsController < ApplicationController
   end
 
   def complete
-    notes_reached = params[:notes_reached].to_i
-    @session.complete!(notes_reached: notes_reached)
+    @session.complete!(
+      notes_reached: params[:notes_reached].to_i,
+      correct_notes: params[:correct_notes]&.to_i,
+      incorrect_notes: params[:incorrect_notes]&.to_i
+    )
 
     respond_to do |format|
       format.turbo_stream do

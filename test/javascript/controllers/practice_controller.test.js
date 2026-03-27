@@ -217,6 +217,26 @@ describe("PracticeController", () => {
       expect(controller.started).toBe(false)
       expect(cancelAnimationFrame).toHaveBeenCalled()
     })
+
+    it("sends correct_notes and incorrect_notes in the complete request", () => {
+      startAndSkipCountIn()
+
+      // Play first note correctly
+      advanceTime(100)
+      controller.handleNoteOn(new CustomEvent("midi:noteon", { detail: { midi: 60, velocity: 80 } }))
+
+      // Let all notes pass to complete
+      advanceTime(2000)
+
+      // Find the PATCH call to /complete
+      const completeCalls = fetch.mock.calls.filter(c => c[0].includes("/complete"))
+      expect(completeCalls.length).toBe(1)
+
+      const body = JSON.parse(completeCalls[0][1].body)
+      expect(body.correct_notes).toBe(1)
+      expect(body.incorrect_notes).toBe(2) // 2 missed notes
+      expect(body.notes_reached).toBe(3)
+    })
   })
 
   describe("activeNoteIndexAtBeat()", () => {

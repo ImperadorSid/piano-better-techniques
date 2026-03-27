@@ -10,9 +10,13 @@ class PracticeSession < ApplicationRecord
 
   validates :started_at, presence: true
 
-  def complete!(notes_reached: nil)
-    total = correct_notes.to_i + incorrect_notes.to_i
-    pct = total > 0 ? (correct_notes.to_f / total * 100).round(1) : 0.0
+  def complete!(notes_reached: nil, correct_notes: nil, incorrect_notes: nil)
+    # Use client-provided counts if available (handles restart scenarios)
+    self.correct_notes = correct_notes if correct_notes
+    self.incorrect_notes = incorrect_notes if incorrect_notes
+
+    total = self.correct_notes.to_i + self.incorrect_notes.to_i
+    pct = total > 0 ? (self.correct_notes.to_f / total * 100).round(1) : 0.0
     update!(
       completed: true,
       ended_at: Time.current,
