@@ -61,14 +61,6 @@
     <span data-midi-target="status" style="color:#888;font-size:0.85rem;">MIDI: Not connected</span>
   </div>
 
-  <%# Session complete Turbo Frame %>
+  <%# Session complete Turbo Frame (populated by server on completion) %>
   <turbo-frame id="session_complete"></turbo-frame>
-
-  <%# Score panel (hidden until complete) %>
-  <div data-practice-target="scorePanel" style="display:none;background:#111;border:1px solid #333;border-radius:8px;padding:24px;text-align:center;">
-    <h3 style="color:#90ee90;">Session Complete!</h3>
-    <div style="font-size:2rem;color:#7c7cff;font-weight:bold;" data-practice-target="accuracyDisplay">—</div>
-    <p style="color:#888;">Accuracy</p>
-    <%= link_to "Practice Again", song_path(@song_part.song), style: "background:#2d5a2d;color:#90ee90;padding:10px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:12px;" %>
-  </div>
 </div>

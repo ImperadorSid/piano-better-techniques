@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // A count-in countdown plays one measure before the music starts.
 // MIDI input is evaluated against timing windows for accuracy scoring.
 export default class extends Controller {
-  static targets = ["startButton", "restartButton", "countDisplay", "progressBar", "progressText", "scorePanel", "accuracyDisplay", "resultDisplay"]
+  static targets = ["startButton", "restartButton", "countDisplay", "progressBar", "progressText", "resultDisplay"]
   static outlets = ["keyboard", "staff"]
   static values  = {
     notes:           Array,
@@ -52,7 +52,7 @@ export default class extends Controller {
 
     if (this.hasStartButtonTarget) this.startButtonTarget.style.display = "none"
     if (this.hasRestartButtonTarget) this.restartButtonTarget.style.display = "inline-block"
-    if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "none"
+
     if (this.hasResultDisplayTarget) this.resultDisplayTarget.style.display = "none"
 
     // Render initial staff with clean note colors
@@ -237,11 +237,6 @@ export default class extends Controller {
     })
     .then(r => r.text())
     .then(html => {
-      const total = this.notesValue.length
-      const acc = total > 0 ? ((this.correctCount / total) * 100).toFixed(1) : "0.0"
-
-      if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "block"
-      if (this.hasAccuracyDisplayTarget) this.accuracyDisplayTarget.textContent = `${acc}%`
       if (this.hasCountDisplayTarget) this.countDisplayTarget.textContent = ""
       if (this.hasResultDisplayTarget) {
         this.resultDisplayTarget.textContent = `${this.correctCount} correct · ${this.incorrectCount} wrong · ${this.missedCount} missed`
@@ -264,7 +259,7 @@ export default class extends Controller {
       this.staffOutlet.removePlayhead()
       this.staffOutlet.clear()
     }
-    if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "none"
+
     if (this.hasResultDisplayTarget) this.resultDisplayTarget.style.display = "none"
     // Remove server-rendered session complete card and restore empty turbo frame
     const sessionCard = document.getElementById("session_complete")

@@ -25,7 +25,7 @@ function makeElement(notes = SAMPLE_NOTES, sessionId = 1, songPartId = 1, bpm = 
   el.setAttribute("data-practice-bpm-value", String(bpm))
   el.setAttribute("data-practice-beats-per-measure-value", String(beatsPerMeasure))
 
-  const targets = ["startButton", "restartButton", "countDisplay", "progressBar", "progressText", "scorePanel", "accuracyDisplay", "resultDisplay"]
+  const targets = ["startButton", "restartButton", "countDisplay", "progressBar", "progressText", "resultDisplay"]
   targets.forEach(name => {
     const t = document.createElement("div")
     t.setAttribute("data-practice-target", name)
@@ -241,14 +241,6 @@ describe("PracticeController", () => {
       expect(controller.started).toBe(true) // restarted
       expect(controller.correctCount).toBe(0)
       expect(controller.noteResults.size).toBe(0)
-    })
-
-    it("hides the score panel", () => {
-      const panel = element.querySelector("[data-practice-target='scorePanel']")
-      panel.style.display = "block"
-      controller.start()
-      controller.restart()
-      expect(panel.style.display).toBe("none")
     })
 
     it("hides the result display", () => {
