@@ -55,8 +55,9 @@ export default class extends Controller {
     if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "none"
     if (this.hasResultDisplayTarget) this.resultDisplayTarget.style.display = "none"
 
-    // Render initial staff
+    // Render initial staff with clean note colors
     if (this.hasStaffOutlet) {
+      this.staffOutlet.resetResults()
       this.staffOutlet.showNotes(0, this.notesValue)
     }
 

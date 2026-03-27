@@ -70,6 +70,11 @@ export default class extends Controller {
     this.playheadLine = null
   }
 
+  resetResults() {
+    this.noteResults = null
+    this._lastResultsCount = 0
+  }
+
   clear() {
     this.element.innerHTML = ""
     this.staveGeometry = []

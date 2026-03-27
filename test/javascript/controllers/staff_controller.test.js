@@ -129,6 +129,16 @@ describe("StaffController", () => {
     })
   })
 
+  describe("resetResults()", () => {
+    it("clears noteResults so notes render in default color", () => {
+      controller.noteResults = new Map([[0, "correct"], [1, "missed"]])
+      controller._lastResultsCount = 2
+      controller.resetResults()
+      expect(controller.noteResults).toBeNull()
+      expect(controller._lastResultsCount).toBe(0)
+    })
+  })
+
   describe("clear()", () => {
     it("empties the element innerHTML", () => {
       controller.showNotes(0, SAMPLE_NOTES)
