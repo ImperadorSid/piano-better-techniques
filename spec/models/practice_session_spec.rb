@@ -79,5 +79,30 @@ RSpec.describe PracticeSession, type: :model do
       expect(attempt.played_velocity).to eq(85)
       expect(attempt.expected_velocity).to eq(75)
     end
+
+    it "records missed notes (played_midi: 0) as incorrect" do
+      session.record_attempt!(
+        note_position: 0, expected_midi: 60, played_midi: 0,
+        correct: false, response_ms: nil, played_velocity: 0, expected_velocity: 75
+      )
+      expect(session.reload.incorrect_notes).to eq(1)
+      attempt = session.session_attempts.last
+      expect(attempt.played_midi).to eq(0)
+      expect(attempt.response_ms).to be_nil
+    end
+  end
+
+  describe "#complete! with auto-advance data" do
+    let(:session) { create(:practice_session, correct_notes: 3, incorrect_notes: 7, total_notes: 10) }
+
+    it "calculates accuracy from correct vs total attempts" do
+      session.complete!(notes_reached: 10)
+      expect(session.reload.accuracy_pct).to eq(30.0)
+    end
+
+    it "stores notes_reached as total notes in song" do
+      session.complete!(notes_reached: 10)
+      expect(session.reload.notes_reached).to eq(10)
+    end
   end
 end
