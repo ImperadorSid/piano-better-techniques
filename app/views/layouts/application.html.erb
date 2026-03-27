@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Piano App" %></title>
+    <title><%= content_for(:title) || "Piano Learner" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Piano App">
+    <meta name="application-name" content="Piano Learner">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -17,29 +17,58 @@
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #0a0a1a; color: #e0e0ff; font-family: 'Inter', sans-serif; min-height: 100vh; }
+      h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; }
+      a { transition: color 0.15s; }
+      .neon-nav-link { color: #a0a0cc; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.9rem; letter-spacing: 0.02em; padding: 4px 0; border-bottom: 2px solid transparent; transition: all 0.2s; }
+      .neon-nav-link:hover { color: #e0e0ff; }
+      .neon-nav-link.active { color: #ff00ff; border-bottom-color: #ff00ff; text-shadow: 0 0 8px rgba(255,0,255,0.5); }
+      .neon-card { background: #111128; border: 1px solid #2a2a44; border-radius: 8px; padding: 20px; transition: all 0.3s; }
+      .neon-card:hover { box-shadow: 0 0 15px rgba(255,0,255,0.15), 0 0 5px rgba(255,0,255,0.1); border-color: #ff00ff44; }
+      .neon-btn-primary { background: linear-gradient(135deg, #ff00ff, #cc00cc); color: white; padding: 10px 24px; border-radius: 8px; border: none; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.9rem; letter-spacing: 0.05em; transition: all 0.2s; box-shadow: 0 0 10px rgba(255,0,255,0.2); }
+      .neon-btn-primary:hover { box-shadow: 0 0 20px rgba(255,0,255,0.4); }
+      .neon-btn-success { background: #003322; color: #39ff14; padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(57,255,20,0.3); cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.05em; text-decoration: none; transition: all 0.2s; display: inline-block; }
+      .neon-btn-success:hover { box-shadow: 0 0 15px rgba(57,255,20,0.3); background: #004433; }
+      .neon-btn-cyan { background: transparent; color: #00f0ff; padding: 8px 16px; border-radius: 6px; border: 1px solid #00f0ff; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.05em; text-decoration: none; transition: all 0.2s; display: inline-block; }
+      .neon-btn-cyan:hover { background: rgba(0,240,255,0.1); box-shadow: 0 0 10px rgba(0,240,255,0.2); }
+      .neon-btn-secondary { background: #1a1a2e; color: #a0a0cc; padding: 10px 24px; border-radius: 8px; border: 1px solid #2a2a44; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; }
+      .neon-btn-secondary:hover { border-color: #ff00ff44; color: #e0e0ff; }
+      .neon-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; border: 1px solid #00f0ff; color: #00f0ff; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+    </style>
   </head>
 
   <body>
-    <nav style="background:#1a1a2e;padding:12px 24px;display:flex;align-items:center;gap:24px;">
-      <%= link_to "🎹 Piano Learner", root_path, style: "color:#e0e0ff;font-weight:bold;text-decoration:none;font-size:1.2rem;" %>
-      <%= link_to "Library", songs_path, style: "color:#b0b0dd;text-decoration:none;" %>
-      <%= link_to "History", practice_sessions_path, style: "color:#b0b0dd;text-decoration:none;" %>
-      <%= link_to "Dashboard", dashboard_path, style: "color:#b0b0dd;text-decoration:none;" %>
-      <%= link_to "MIDI Setup", midi_setup_path, style: "color:#b0b0dd;text-decoration:none;" %>
+    <nav style="background:#0a0a1a;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,0,255,0.15);box-shadow:0 0 15px rgba(255,0,255,0.1);position:sticky;top:0;z-index:50;">
+      <div style="display:flex;align-items:center;gap:32px;">
+        <%= link_to root_path, style: "text-decoration:none;display:flex;align-items:center;gap:8px;" do %>
+          <span style="font-size:1.3rem;">🎹</span>
+          <span style="color:#ff00ff;font-weight:800;font-size:1.2rem;font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;text-shadow:0 0 8px rgba(255,0,255,0.6);">Piano Learner</span>
+        <% end %>
+        <div style="display:flex;gap:20px;">
+          <%= link_to "Library", songs_path, class: "neon-nav-link #{'active' if controller_name == 'songs'}" %>
+          <%= link_to "History", practice_sessions_path, class: "neon-nav-link #{'active' if controller_name == 'practice_sessions'}" %>
+          <%= link_to "Dashboard", dashboard_path, class: "neon-nav-link #{'active' if controller_name == 'dashboard'}" %>
+          <%= link_to "MIDI Setup", midi_setup_path, class: "neon-nav-link #{'active' if controller_name == 'midi_setup'}" %>
+        </div>
+      </div>
     </nav>
 
     <% if notice %>
-      <div style="background:#2d5a2d;color:#90ee90;padding:10px 24px;"><%= notice %></div>
+      <div style="background:#003322;color:#39ff14;padding:10px 24px;border-bottom:1px solid rgba(57,255,20,0.3);font-size:0.9rem;"><%= notice %></div>
     <% end %>
     <% if alert %>
-      <div style="background:#5a2d2d;color:#ee9090;padding:10px 24px;"><%= alert %></div>
+      <div style="background:#330022;color:#ff2255;padding:10px 24px;border-bottom:1px solid rgba(255,34,85,0.3);font-size:0.9rem;"><%= alert %></div>
     <% end %>
 
-    <main style="padding:24px;max-width:1100px;margin:0 auto;">
+    <main style="padding:32px 24px;max-width:1200px;margin:0 auto;">
       <%= yield %>
     </main>
   </body>

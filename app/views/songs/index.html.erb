@@ -1,33 +1,36 @@
 <% content_for :title, "Song Library — Piano Learner" %>
 
-<div style="margin-bottom:24px;">
-  <h1 style="margin:0;">Song Library</h1>
+<div style="margin-bottom:32px;">
+  <h1 style="margin:0 0 4px;font-size:2.5rem;font-weight:800;letter-spacing:-0.03em;">Song Library</h1>
+  <p style="color:#666688;text-transform:uppercase;letter-spacing:0.15em;font-size:0.8rem;font-family:'Space Grotesk',sans-serif;margin:0;">Master the Classics in Neon</p>
 </div>
 
 <% if @songs.empty? %>
-  <div style="text-align:center;padding:60px;color:#888;">
-    <p style="font-size:1.5rem;">No songs yet.</p>
-    <p>Run <code>rails db:seed</code> to load the starter songs.</p>
+  <div class="neon-card" style="text-align:center;padding:60px;">
+    <p style="font-size:1.5rem;color:#a0a0cc;">No songs yet.</p>
+    <p style="color:#666688;">Run <code style="color:#00f0ff;background:#1a1a2e;padding:2px 8px;border-radius:4px;">rails db:seed</code> to load the starter songs.</p>
   </div>
 <% else %>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
     <% @songs.each do |song| %>
-      <div style="border:1px solid #333;border-radius:8px;padding:20px;background:#111;">
-        <div style="display:flex;justify-content:space-between;align-items:start;">
-          <h3 style="margin:0 0 4px;">
-            <%= link_to song.title, song_path(song), style: "color:#e0e0ff;text-decoration:none;" %>
+      <div class="neon-card">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
+          <h3 style="margin:0;font-size:1.15rem;font-weight:700;">
+            <%= link_to song.title, song_path(song), style: "color:#00f0ff;text-decoration:none;" %>
           </h3>
-          <span style="background:#2a2a5a;color:#7c7cff;padding:2px 8px;border-radius:12px;font-size:0.8rem;">
-            <%= song.difficulty_label %>
-          </span>
+          <span class="neon-badge"><%= song.difficulty_label %></span>
         </div>
-        <p style="color:#888;margin:4px 0 12px;font-size:0.9rem;"><%= song.composer.presence || "Unknown composer" %></p>
-        <div style="color:#666;font-size:0.85rem;margin-bottom:12px;">
-          <%= song.tempo_bpm %> BPM · <%= song.key_signature %> · <%= song.time_signature %>
+        <p style="color:#a0a0cc;margin:4px 0 16px;font-size:0.9rem;"><%= song.composer.presence || "Unknown composer" %></p>
+
+        <div style="display:flex;gap:16px;margin-bottom:16px;color:#666688;font-size:0.8rem;font-family:'Space Grotesk',sans-serif;letter-spacing:0.03em;">
+          <span><%= song.tempo_bpm %> BPM</span>
+          <span><%= song.key_signature %></span>
+          <span><%= song.time_signature %></span>
         </div>
+
         <div style="display:flex;gap:8px;">
-          <%= link_to "Practice", song_path(song), style: "background:#2d5a2d;color:#90ee90;padding:6px 12px;border-radius:4px;text-decoration:none;font-size:0.9rem;" %>
-          <%= link_to "Analysis", analyze_song_path(song), style: "background:#2a2a5a;color:#7c7cff;padding:6px 12px;border-radius:4px;text-decoration:none;font-size:0.9rem;" %>
+          <%= link_to "PRACTICE", song_path(song), class: "neon-btn-success" %>
+          <%= link_to "ANALYSIS", analyze_song_path(song), class: "neon-btn-cyan" %>
         </div>
       </div>
     <% end %>
