@@ -95,7 +95,7 @@ RSpec.describe "Songs", type: :request do
 
       it "shows the regenerate button" do
         get analyze_song_path(song)
-        expect(response.body).to include("Regenerate Analysis")
+        expect(response.body).to include("REGENERATE")
       end
 
       it "shows the AI content sections" do

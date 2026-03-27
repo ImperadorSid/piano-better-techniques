@@ -1,48 +1,24 @@
 <% if song_analysis.ai_pending? %>
-  <div style="background:#1a1a00;border:1px solid #555500;border-radius:8px;padding:20px;margin-bottom:32px;color:#dddd88;text-align:center;">
-    <p style="margin:0;">Generating AI analysis… It will appear here automatically.</p>
+  <div style="background:rgba(255,255,0,0.05);border:1px solid rgba(255,255,0,0.2);border-radius:8px;padding:20px;margin-bottom:32px;color:#ffff00;text-align:center;">
+    <p style="margin:0;font-family:'Space Grotesk',sans-serif;">Generating AI analysis… It will appear here automatically.</p>
   </div>
 <% elsif song_analysis.ai_failed? %>
-  <div style="background:#1a0000;border:1px solid #550000;border-radius:8px;padding:20px;margin-bottom:32px;color:#dd8888;text-align:center;">
-    <p style="margin:0;">AI analysis could not be completed. Please try again later.</p>
+  <div style="background:rgba(255,34,85,0.05);border:1px solid rgba(255,34,85,0.2);border-radius:8px;padding:20px;margin-bottom:32px;color:#ff2255;text-align:center;">
+    <p style="margin:0;font-family:'Space Grotesk',sans-serif;">AI analysis could not be completed. Please try again later.</p>
   </div>
 <% elsif song_analysis.ai_generated? %>
 
-  <section style="margin-bottom:32px;">
-    <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Overview</h2>
-    <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-      <%= song_analysis.ai_overview %>
-    </div>
-  </section>
+  <% ["Overview", "Song Map", "Hand Positioning", "Difficult Sections", "Harmony & Dynamics"].zip(
+       [song_analysis.ai_overview, song_analysis.ai_song_map, song_analysis.ai_hand_positions, song_analysis.ai_difficult_sections, song_analysis.ai_harmony]
+     ).each do |title, content| %>
+    <section style="margin-bottom:32px;">
+      <h2 style="color:#a0a0cc;margin-bottom:16px;border-bottom:1px solid #2a2a44;padding-bottom:8px;font-size:1.1rem;text-transform:uppercase;letter-spacing:0.06em;"><%= title %></h2>
+      <div class="neon-card" style="color:#a0a0cc;line-height:1.8;white-space:pre-wrap;font-size:0.95rem;">
+        <%= content %>
+      </div>
+    </section>
+  <% end %>
 
-  <section style="margin-bottom:32px;">
-    <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Song Map</h2>
-    <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-      <%= song_analysis.ai_song_map %>
-    </div>
-  </section>
-
-  <section style="margin-bottom:32px;">
-    <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Hand Positioning</h2>
-    <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-      <%= song_analysis.ai_hand_positions %>
-    </div>
-  </section>
-
-  <section style="margin-bottom:32px;">
-    <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Difficult Sections</h2>
-    <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-      <%= song_analysis.ai_difficult_sections %>
-    </div>
-  </section>
-
-  <section style="margin-bottom:32px;">
-    <h2 style="color:#b0b0dd;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;">Harmony &amp; Dynamics</h2>
-    <div style="background:#111;border:1px solid #333;border-radius:8px;padding:20px;color:#ccc;line-height:1.7;white-space:pre-wrap;">
-      <%= song_analysis.ai_harmony %>
-    </div>
-  </section>
-
-  <hr style="border-color:#222;margin-bottom:32px;">
+  <hr style="border-color:#2a2a44;margin-bottom:32px;">
 
 <% end %>
