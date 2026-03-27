@@ -25,7 +25,7 @@ function makeElement(notes = SAMPLE_NOTES, sessionId = 1, songPartId = 1, bpm = 
   el.setAttribute("data-practice-bpm-value", String(bpm))
   el.setAttribute("data-practice-beats-per-measure-value", String(beatsPerMeasure))
 
-  const targets = ["startButton", "restartButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
+  const targets = ["startButton", "restartButton", "countDisplay", "progressBar", "progressText", "scorePanel", "accuracyDisplay", "resultDisplay"]
   targets.forEach(name => {
     const t = document.createElement("div")
     t.setAttribute("data-practice-target", name)
@@ -124,7 +124,7 @@ describe("PracticeController", () => {
   describe("count-in", () => {
     it("displays beat numbers during count-in", () => {
       controller.start()
-      const display = element.querySelector("[data-practice-target='noteDisplay']")
+      const display = element.querySelector("[data-practice-target='countDisplay']")
 
       // At time 0, beat 1 should show
       advanceTime(0)

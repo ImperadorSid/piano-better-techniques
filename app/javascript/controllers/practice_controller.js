@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // A count-in countdown plays one measure before the music starts.
 // MIDI input is evaluated against timing windows for accuracy scoring.
 export default class extends Controller {
-  static targets = ["startButton", "restartButton", "noteDisplay", "noteLabel", "progressBar", "progressText", "scorePanel", "accuracyDisplay"]
+  static targets = ["startButton", "restartButton", "countDisplay", "progressBar", "progressText", "scorePanel", "accuracyDisplay", "resultDisplay"]
   static outlets = ["keyboard", "staff"]
   static values  = {
     notes:           Array,
@@ -39,7 +39,7 @@ export default class extends Controller {
 
   start() {
     if (this.notesValue.length === 0) {
-      if (this.hasNoteDisplayTarget) this.noteDisplayTarget.textContent = "No notes found."
+      if (this.hasCountDisplayTarget) this.countDisplayTarget.textContent = "No notes found."
       return
     }
 
@@ -49,11 +49,11 @@ export default class extends Controller {
     this.incorrectCount = 0
     this.missedCount = 0
     this.noteResults = new Map()
-    this.lastDisplayedBeat = -1
 
     if (this.hasStartButtonTarget) this.startButtonTarget.style.display = "none"
     if (this.hasRestartButtonTarget) this.restartButtonTarget.style.display = "inline-block"
     if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "none"
+    if (this.hasResultDisplayTarget) this.resultDisplayTarget.style.display = "none"
 
     // Render initial staff
     if (this.hasStaffOutlet) {
@@ -67,7 +67,7 @@ export default class extends Controller {
     this.countInPhase = true
     this.countInStartTime = performance.now()
 
-    if (this.hasNoteLabelTarget) this.noteLabelTarget.textContent = "Get ready..."
+    if (this.hasCountDisplayTarget) this.countDisplayTarget.textContent = "Get ready..."
 
     this.animFrameId = requestAnimationFrame(this.tick.bind(this))
   }
@@ -95,15 +95,14 @@ export default class extends Controller {
       // Count-in finished, begin playback
       this.countInPhase = false
       this.startTime = performance.now()
-      if (this.hasNoteLabelTarget) this.noteLabelTarget.textContent = ""
-      this.updateActiveNote(0)
+      if (this.hasCountDisplayTarget) this.countDisplayTarget.textContent = ""
       return
     }
 
     // Display the current count beat
     const displayBeat = beatIndex + 1
-    if (this.hasNoteDisplayTarget) {
-      this.noteDisplayTarget.textContent = String(displayBeat)
+    if (this.hasCountDisplayTarget) {
+      this.countDisplayTarget.textContent = String(displayBeat)
     }
   }
 
@@ -111,16 +110,13 @@ export default class extends Controller {
     const elapsedMs = now - this.startTime
     const currentBeat = elapsedMs / this.msPerBeat
 
-    // Update playhead on staff
+    // Update playhead and note colors on staff
     if (this.hasStaffOutlet) {
-      this.staffOutlet.updatePlayhead(currentBeat, this.notesValue)
+      this.staffOutlet.updatePlayhead(currentBeat, this.notesValue, this.noteResults)
     }
 
     // Check for missed notes
     this.checkMissedNotes(currentBeat)
-
-    // Update active note display
-    this.updateActiveNote(currentBeat)
 
     // Update progress
     this.updateProgress(currentBeat)
@@ -158,22 +154,6 @@ export default class extends Controller {
           expectedVelocity: note.vel
         })
       }
-    }
-  }
-
-  updateActiveNote(currentBeat) {
-    const idx = this.activeNoteIndexAtBeat(currentBeat)
-    if (idx === -1 || idx === this.lastDisplayedBeat) return
-
-    this.lastDisplayedBeat = idx
-    const note = this.notesValue[idx]
-
-    if (this.hasNoteDisplayTarget) {
-      this.noteDisplayTarget.textContent = note.name
-    }
-    if (this.hasNoteLabelTarget) {
-      const dynamics = this.velocityLabel(note.vel)
-      this.noteLabelTarget.textContent = `MIDI ${note.midi} · ${dynamics}`
     }
   }
 
@@ -261,9 +241,10 @@ export default class extends Controller {
 
       if (this.hasScorePanelTarget) this.scorePanelTarget.style.display = "block"
       if (this.hasAccuracyDisplayTarget) this.accuracyDisplayTarget.textContent = `${acc}%`
-      if (this.hasNoteDisplayTarget) this.noteDisplayTarget.textContent = "🎉"
-      if (this.hasNoteLabelTarget) {
-        this.noteLabelTarget.textContent = `${this.correctCount} correct · ${this.incorrectCount} wrong · ${this.missedCount} missed`
+      if (this.hasCountDisplayTarget) this.countDisplayTarget.textContent = ""
+      if (this.hasResultDisplayTarget) {
+        this.resultDisplayTarget.textContent = `${this.correctCount} correct · ${this.incorrectCount} wrong · ${this.missedCount} missed`
+        this.resultDisplayTarget.style.display = "block"
       }
 
       Turbo.renderStreamMessage(html)

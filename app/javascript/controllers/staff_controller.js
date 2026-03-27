@@ -18,6 +18,8 @@ export default class extends Controller {
     this.svgElement = null
     this.currentPageStart = -1
     this.allNotes = []
+    this.noteResults = null
+    this._lastResultsCount = 0
   }
 
   disconnect() {
@@ -30,22 +32,24 @@ export default class extends Controller {
     const currentMeasureIndex = this._measureIndexForNote(allNotes, currentIndex)
     const { visibleMeasures, startMeasure } = this._computeVisibleMeasures(measures, currentMeasureIndex)
     this.currentPageStart = startMeasure
-    this._render(visibleMeasures, startMeasure, allNotes, currentIndex)
+    this._render(visibleMeasures, startMeasure, allNotes)
   }
 
-  updatePlayhead(currentBeat, allNotes) {
+  updatePlayhead(currentBeat, allNotes, noteResults) {
     if (!allNotes) allNotes = this.allNotes
+    if (noteResults) this.noteResults = noteResults
     const bpm = this.beatsPerMeasureValue
     const measureIndex = Math.floor(currentBeat / bpm)
 
-    // Check if we need to change pages
+    // Check if we need to change pages or if results changed
     const pageStart = Math.floor(measureIndex / MEASURES_VISIBLE) * MEASURES_VISIBLE
-    if (pageStart !== this.currentPageStart) {
+    const resultsChanged = this.noteResults && this.noteResults.size !== this._lastResultsCount
+    if (pageStart !== this.currentPageStart || resultsChanged) {
       const measures = this._groupByMeasure(allNotes)
       const { visibleMeasures, startMeasure } = this._computeVisibleMeasures(measures, measureIndex)
       this.currentPageStart = startMeasure
-      const activeIdx = this._noteIndexAtBeat(allNotes, currentBeat)
-      this._render(visibleMeasures, startMeasure, allNotes, activeIdx)
+      this._render(visibleMeasures, startMeasure)
+      this._lastResultsCount = this.noteResults ? this.noteResults.size : 0
     }
 
     // Find the geometry entry for the current beat
@@ -134,7 +138,7 @@ export default class extends Controller {
     }
   }
 
-  _render(visibleMeasures, startMeasure, _allNotes, activeNoteIndex) {
+  _render(visibleMeasures, startMeasure) {
     this.element.innerHTML = ""
     this.playheadLine = null
     this.staveGeometry = []
@@ -185,10 +189,13 @@ export default class extends Controller {
           sn.addModifier(new Accidental("#"), 0)
         }
 
-        if (note._index === activeNoteIndex) {
-          sn.setStyle({ fillStyle: "#5555ff", strokeStyle: "#5555ff" })
+        const result = this.noteResults && this.noteResults.get(note._index)
+        if (result === "correct") {
+          sn.setStyle({ fillStyle: "#4CAF50", strokeStyle: "#4CAF50" })
+        } else if (result === "incorrect" || result === "missed") {
+          sn.setStyle({ fillStyle: "#f44336", strokeStyle: "#f44336" })
         } else {
-          sn.setStyle({ fillStyle: "#aaa", strokeStyle: "#aaa" })
+          sn.setStyle({ fillStyle: "#333", strokeStyle: "#333" })
         }
 
         return sn
