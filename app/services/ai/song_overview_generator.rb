@@ -1,5 +1,6 @@
 module AI
   # Calls the Claude API to generate a structured, beginner-friendly analysis of a song.
+  # Uses tool_use (structured output) to guarantee valid JSON conforming to the expected schema.
   # Returns structured JSON stored in the five ai_* text fields on SongAnalysis.
   # Skips silently if ANTHROPIC_API_KEY is not set.
   class SongOverviewGenerator
@@ -21,14 +22,22 @@ module AI
       parsed = parse_response(response)
       return unless parsed
 
-      analysis.update!(
+      attrs = {
         ai_overview:           parsed["overview"].to_json,
         ai_song_map:           parsed["song_map"].to_json,
         ai_hand_positions:     parsed["hand_positions"].to_json,
         ai_difficult_sections: parsed["difficult_sections"].to_json,
         ai_harmony:            parsed["harmony"].to_json,
         ai_status:             nil
-      )
+      }
+
+      usage = response.body["usage"]
+      if usage
+        attrs[:input_tokens] = usage["input_tokens"]
+        attrs[:output_tokens] = usage["output_tokens"]
+      end
+
+      analysis.update!(attrs)
     end
 
     private
@@ -41,9 +50,110 @@ module AI
       {
         model: MODEL,
         max_tokens: 4096,
+        tools: [ tool_definition ],
+        tool_choice: { type: "tool", name: "song_analysis" },
         messages: [
           { role: "user", content: prompt }
         ]
+      }
+    end
+
+    def tool_definition
+      {
+        name: "song_analysis",
+        description: "Store a structured, beginner-friendly analysis of a piano song.",
+        input_schema: {
+          type: "object",
+          required: %w[overview song_map hand_positions difficult_sections harmony],
+          properties: {
+            overview: {
+              type: "object",
+              required: %w[mood key_insight tempo_insight time_insight estimated_practice_time key_takeaway body],
+              properties: {
+                mood: { type: "string", description: "One sentence describing the emotional character" },
+                key_insight: { type: "string", description: "What the key signature means practically" },
+                tempo_insight: { type: "string", description: "The tempo in relatable terms" },
+                time_insight: { type: "string", description: "The time signature explained simply" },
+                estimated_practice_time: { type: "string", description: "e.g. '2-3 hours'" },
+                key_takeaway: { type: "string", description: "The single most important thing for a beginner" },
+                body: { type: "string", description: "2 concise paragraphs about character and practical guidance" }
+              }
+            },
+            song_map: {
+              type: "array",
+              items: {
+                type: "object",
+                required: %w[section beats chords description],
+                properties: {
+                  section: { type: "string" },
+                  beats: { type: "string" },
+                  chords: { type: "string" },
+                  description: { type: "string" }
+                }
+              }
+            },
+            hand_positions: {
+              type: "object",
+              required: %w[right left coordination_tip],
+              properties: {
+                right: {
+                  type: "object",
+                  required: %w[position role drill target_bpm],
+                  properties: {
+                    position: { type: "string" },
+                    role: { type: "string" },
+                    drill: { type: "string" },
+                    target_bpm: { type: "integer" }
+                  }
+                },
+                left: {
+                  type: "object",
+                  required: %w[position role drill target_bpm],
+                  properties: {
+                    position: { type: "string" },
+                    role: { type: "string" },
+                    drill: { type: "string" },
+                    target_bpm: { type: "integer" }
+                  }
+                },
+                coordination_tip: { type: "string" }
+              }
+            },
+            difficult_sections: {
+              type: "array",
+              items: {
+                type: "object",
+                required: %w[name beats challenge method start_bpm milestone],
+                properties: {
+                  name: { type: "string" },
+                  beats: { type: "string" },
+                  challenge: { type: "string" },
+                  method: { type: "string" },
+                  start_bpm: { type: "integer" },
+                  milestone: { type: "string" }
+                }
+              }
+            },
+            harmony: {
+              type: "object",
+              required: %w[chord_emotions dynamics_guidance],
+              properties: {
+                chord_emotions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: %w[chord emotion],
+                    properties: {
+                      chord: { type: "string" },
+                      emotion: { type: "string" }
+                    }
+                  }
+                },
+                dynamics_guidance: { type: "string" }
+              }
+            }
+          }
+        }
       }
     end
 
@@ -71,39 +181,7 @@ module AI
 
         Write in a warm, confident, encouraging tone — like a patient teacher. Address the student as "you". Use plain language: avoid jargon, explain musical terms simply. Give concrete advice (exact fingers, BPM numbers, drill names).
 
-        Respond with ONLY a valid JSON object (no markdown, no extra text, no code fences) with exactly these five keys. Each value must be a structured JSON object or array, NOT plain text strings:
-
-        {
-          "overview": {
-            "mood": "One sentence describing the emotional character and feel of this piece",
-            "key_insight": "One sentence explaining what the key signature means practically (e.g. which keys to use)",
-            "tempo_insight": "One sentence explaining the tempo in relatable terms (e.g. 'a comfortable walking pace')",
-            "time_insight": "One sentence explaining the time signature (e.g. 'count 1-2-3-4 steadily')",
-            "estimated_practice_time": "Estimated hours to learn this piece (e.g. '2-3 hours')",
-            "key_takeaway": "The single most important thing for a beginner to know about this piece",
-            "body": "2 concise paragraphs: first about the song's emotional character and what makes it satisfying, second about practical key/tempo/time signature guidance."
-          },
-          "song_map": [
-            {"section": "Letter or name", "beats": "start-end", "chords": "Chord names used", "description": "One sentence describing what happens musically"},
-            ...repeat for each distinct section
-          ],
-          "hand_positions": {
-            "right": {"position": "Note range (e.g. C4-G4)", "role": "What this hand plays (e.g. Melody)", "drill": "Named practice drill", "target_bpm": integer},
-            "left": {"position": "Note range (e.g. C3-G3)", "role": "What this hand plays (e.g. Bass notes)", "drill": "Named practice drill", "target_bpm": integer},
-            "coordination_tip": "One sentence on how to bring both hands together"
-          },
-          "difficult_sections": [
-            {"name": "Section name or description", "beats": "start-end", "challenge": "What makes it hard in plain words", "method": "Named practice method", "start_bpm": integer, "milestone": "Clear goal to hit before moving on"},
-            ...repeat for each challenging section (at least 2)
-          ],
-          "harmony": {
-            "chord_emotions": [
-              {"chord": "Chord name", "emotion": "2-4 word feel (e.g. 'home and settled', 'gentle warmth', 'rising tension')"},
-              ...repeat for each chord in the progression
-            ],
-            "dynamics_guidance": "2-3 sentences about when to play softer/louder and why the contrast matters"
-          }
-        }
+        Use the song_analysis tool to store your response. Provide at least 2 difficult sections and one song map entry per distinct section.
       PROMPT
     end
 
@@ -130,12 +208,12 @@ module AI
 
       log_token_usage(response)
 
-      content = response.body.dig("content", 0, "text")
-      return nil if content.blank?
+      tool_block = response.body.dig("content")&.find { |b| b["type"] == "tool_use" }
+      return nil unless tool_block
 
-      JSON.parse(content)
-    rescue JSON::ParserError => e
-      Rails.logger.error("[AI::SongOverviewGenerator] Failed to parse Claude response: #{e.message} — content length: #{content.length}, last 100 chars: #{content.last(100)}")
+      tool_block["input"]
+    rescue StandardError => e
+      Rails.logger.error("[AI::SongOverviewGenerator] Failed to parse Claude response: #{e.message}")
       nil
     end
 

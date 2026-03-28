@@ -5,15 +5,18 @@ RSpec.describe SongOverviewJob do
   let(:analysis) { song.song_analysis }
 
   let(:successful_response) do
-    body = {
+    tool_input = {
       "overview" => { "mood" => "Fun and cheerful", "body" => "A fun beginner song." },
       "song_map" => [{ "section" => "A", "beats" => "0-16", "chords" => "C-G", "description" => "Verse then chorus" }],
       "hand_positions" => { "right" => { "position" => "C4-G4", "role" => "Melody", "drill" => "Walk", "target_bpm" => 80 }, "left" => { "position" => "C3", "role" => "Bass", "drill" => "Hold", "target_bpm" => 60 }, "coordination_tip" => "Together" },
       "difficult_sections" => [{ "name" => "Middle", "challenge" => "Fast", "method" => "Slow", "start_bpm" => 50, "milestone" => "Clean" }],
       "harmony" => { "chord_emotions" => [{ "chord" => "C", "emotion" => "Home" }], "dynamics_guidance" => "Bright and cheerful." }
-    }.to_json
+    }
 
-    double(success?: true, body: { "content" => [ { "text" => body } ] })
+    double(success?: true, body: {
+      "content" => [ { "type" => "tool_use", "id" => "toolu_123", "name" => "song_analysis", "input" => tool_input } ],
+      "usage" => { "input_tokens" => 500, "output_tokens" => 1200 }
+    })
   end
 
   let(:failed_response) do

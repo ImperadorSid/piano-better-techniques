@@ -33,13 +33,13 @@ RSpec.describe AI::SongOverviewGenerator do
     }
   end
 
-  let(:api_response_body) { structured_response.to_json }
-
   let(:successful_response) do
     double(
       success?: true,
       body: {
-        "content" => [ { "text" => api_response_body } ],
+        "content" => [
+          { "type" => "tool_use", "id" => "toolu_123", "name" => "song_analysis", "input" => structured_response }
+        ],
         "usage" => { "input_tokens" => 500, "output_tokens" => 1200 }
       }
     )
@@ -57,7 +57,7 @@ RSpec.describe AI::SongOverviewGenerator do
   end
 
   describe "#generate!" do
-    context "when the API responds successfully" do
+    context "when the API responds successfully with tool_use" do
       before do
         allow_any_instance_of(Faraday::Connection).to receive(:post).and_return(successful_response)
       end
@@ -106,6 +106,13 @@ RSpec.describe AI::SongOverviewGenerator do
         expect(Rails.logger).to receive(:info).with(/Token usage.*input=500.*output=1200/)
         generator.generate!
       end
+
+      it "persists token usage to the analysis record" do
+        generator.generate!
+        analysis = song.song_analysis.reload
+        expect(analysis.input_tokens).to eq(500)
+        expect(analysis.output_tokens).to eq(1200)
+      end
     end
 
     context "when ANTHROPIC_API_KEY is not set" do
@@ -141,17 +148,28 @@ RSpec.describe AI::SongOverviewGenerator do
       end
     end
 
-    context "when the API returns invalid JSON" do
-      let(:bad_response) do
-        double(success?: true, body: { "content" => [ { "text" => "not json at all" } ] })
+    context "when the API returns no tool_use block" do
+      let(:no_tool_response) do
+        double(
+          success?: true,
+          body: {
+            "content" => [ { "type" => "text", "text" => "I cannot process this." } ],
+            "usage" => { "input_tokens" => 100, "output_tokens" => 20 }
+          }
+        )
       end
 
       before do
-        allow_any_instance_of(Faraday::Connection).to receive(:post).and_return(bad_response)
+        allow_any_instance_of(Faraday::Connection).to receive(:post).and_return(no_tool_response)
       end
 
       it "does not raise an error" do
         expect { generator.generate! }.not_to raise_error
+      end
+
+      it "leaves ai_overview blank" do
+        generator.generate!
+        expect(song.song_analysis.reload.ai_overview).to be_nil
       end
     end
 
