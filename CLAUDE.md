@@ -126,36 +126,42 @@ Each note in `song_parts.notes_data` (JSON array):
 ## Routes Summary
 
 ```
-GET  /                              → songs#index
-GET  /songs/:id                     → songs#show
-GET  /songs/:id/analyze             → songs#analyze  (triggers AI job)
-GET  /dashboard                     → dashboard#index
-GET  /midi_setup                    → midi_setup#show
-GET  /practice_sessions             → practice_sessions#index
-POST /song_parts/:id/practice_sessions           → practice_sessions#create
-GET  /song_parts/:id/practice_sessions/:id       → practice_sessions#show
-PATCH /practice_sessions/:id/complete            → practice_sessions#complete
-POST /song_parts/:id/practice_sessions/:id/attempts → attempts#create (JSON API)
+GET    /                              → songs#index
+GET    /songs/:id                     → songs#show
+DELETE /songs/:id                     → songs#destroy
+GET    /songs/:id/analyze             → songs#analyze  (triggers AI job)
+POST   /songs/:id/regenerate          → songs#regenerate  (re-triggers AI job)
+GET    /dashboard                     → dashboard#index
+GET    /midi_setup                    → midi_setup#show
+GET    /practice_sessions             → practice_sessions#index
+POST   /song_parts/:id/practice_sessions           → practice_sessions#create
+GET    /song_parts/:id/practice_sessions/:id       → practice_sessions#show
+PATCH  /practice_sessions/:id/complete             → practice_sessions#complete
+POST   /song_parts/:id/practice_sessions/:id/attempts → attempts#create (JSON API)
 ```
 
 ---
 
 ## Environment
 
-Copy `.env.example` to `.env` and set:
+**Requirements:** Ruby 4.0.1, Node.js 20+, SQLite3
 
-```
-ANTHROPIC_API_KEY=your_key_here
+### Setup
+
+```bash
+bundle install                     # install Ruby gems
+npm install                        # install Node packages (Vitest, jsdom)
+cp .env.example .env               # then set ANTHROPIC_API_KEY
+bin/rails db:prepare               # create + migrate database
 ```
 
-`dotenv-rails` loads this automatically in development and test.
+`dotenv-rails` loads `.env` automatically in development and test.
 
 ---
 
 ## Running the App
 
 ```bash
-bin/rails db:migrate
 bin/rails server         # http://localhost:3000
 ```
 
