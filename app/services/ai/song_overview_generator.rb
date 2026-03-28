@@ -117,14 +117,18 @@ module AI
 
       conn.post do |req|
         req.headers["x-api-key"] = api_key
-        req.headers["anthropic-version"] = "2023-06-01"
+        req.headers["anthropic-version"] = "2024-10-22"
         req.headers["content-type"] = "application/json"
+        req.options.timeout = 60
+        req.options.open_timeout = 10
         req.body = payload
       end
     end
 
     def parse_response(response)
       return nil unless response.success?
+
+      log_token_usage(response)
 
       content = response.body.dig("content", 0, "text")
       return nil if content.blank?
@@ -133,6 +137,16 @@ module AI
     rescue JSON::ParserError => e
       Rails.logger.error("[AI::SongOverviewGenerator] Failed to parse Claude response: #{e.message} — content length: #{content.length}, last 100 chars: #{content.last(100)}")
       nil
+    end
+
+    def log_token_usage(response)
+      usage = response.body["usage"]
+      return unless usage
+
+      Rails.logger.info(
+        "[AI::SongOverviewGenerator] Token usage for song #{@song.id}: " \
+        "input=#{usage["input_tokens"]}, output=#{usage["output_tokens"]}"
+      )
     end
   end
 end

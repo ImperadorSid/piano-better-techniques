@@ -38,7 +38,10 @@ RSpec.describe AI::SongOverviewGenerator do
   let(:successful_response) do
     double(
       success?: true,
-      body: { "content" => [ { "text" => api_response_body } ] }
+      body: {
+        "content" => [ { "text" => api_response_body } ],
+        "usage" => { "input_tokens" => 500, "output_tokens" => 1200 }
+      }
     )
   end
 
@@ -97,6 +100,11 @@ RSpec.describe AI::SongOverviewGenerator do
         harmony = JSON.parse(song.song_analysis.reload.ai_harmony)
         expect(harmony["chord_emotions"].first["chord"]).to eq("C")
         expect(harmony["dynamics_guidance"]).to include("medium volume")
+      end
+
+      it "logs token usage from the API response" do
+        expect(Rails.logger).to receive(:info).with(/Token usage.*input=500.*output=1200/)
+        generator.generate!
       end
     end
 
