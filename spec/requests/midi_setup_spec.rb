@@ -6,5 +6,10 @@ RSpec.describe "MidiSetup", type: :request do
       get midi_setup_path
       expect(response).to have_http_status(:success)
     end
+
+    it "renders the MIDI setup page content" do
+      get midi_setup_path
+      expect(response.body).to include("MIDI")
+    end
   end
 end
