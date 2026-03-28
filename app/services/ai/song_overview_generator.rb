@@ -1,6 +1,6 @@
 module AI
-  # Calls the Claude API to generate a beginner-friendly overview of a song.
-  # Populates the five ai_* text fields on the song's SongAnalysis record.
+  # Calls the Claude API to generate a structured, beginner-friendly analysis of a song.
+  # Returns structured JSON stored in the five ai_* text fields on SongAnalysis.
   # Skips silently if ANTHROPIC_API_KEY is not set.
   class SongOverviewGenerator
     ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
@@ -22,11 +22,11 @@ module AI
       return unless parsed
 
       analysis.update!(
-        ai_overview:           parsed["overview"],
-        ai_song_map:           parsed["song_map"],
-        ai_hand_positions:     parsed["hand_positions"],
-        ai_difficult_sections: parsed["difficult_sections"],
-        ai_harmony:            parsed["harmony"],
+        ai_overview:           parsed["overview"].to_json,
+        ai_song_map:           parsed["song_map"].to_json,
+        ai_hand_positions:     parsed["hand_positions"].to_json,
+        ai_difficult_sections: parsed["difficult_sections"].to_json,
+        ai_harmony:            parsed["harmony"].to_json,
         ai_status:             nil
       )
     end
@@ -40,7 +40,7 @@ module AI
     def build_payload
       {
         model: MODEL,
-        max_tokens: 2048,
+        max_tokens: 4096,
         messages: [
           { role: "user", content: prompt }
         ]
@@ -55,7 +55,7 @@ module AI
       dynamics = analysis.dynamics_map.map { |d| "Beat #{d["beat"]}: #{d["marking"]} (vel #{d["velocity_avg"]})" }.join(", ")
 
       <<~PROMPT
-        You are a music teacher helping beginners learn piano. Given the following song data, generate a structured overview to help a beginner understand and practice this piece.
+        You are a professional music teacher and piano coach. Given the following song data, generate a structured analysis to help a beginner understand and practice this piece efficiently.
 
         Song: #{@song.title}
         Composer: #{@song.composer.presence || "Unknown"}
@@ -69,16 +69,40 @@ module AI
         Dynamics: #{dynamics.presence || "No dynamics data"}
         Hand split point: MIDI note #{analysis.hand_separation["split_midi"].presence || "N/A"}
 
-        Write in a warm, direct, encouraging tone — like a patient teacher sitting next to the student. Address the student as "you". Use plain everyday language: avoid music jargon, and when you must use a musical term, explain it immediately in simple words. Give concrete, specific advice (exact fingers, exact BPM numbers, names for practice drills). Acknowledge where things feel hard and explain why, then give a clear way through it.
+        Write in a warm, confident, encouraging tone — like a patient teacher. Address the student as "you". Use plain language: avoid jargon, explain musical terms simply. Give concrete advice (exact fingers, BPM numbers, drill names).
 
-        Respond with ONLY a valid JSON object (no markdown, no extra text) with exactly these five keys:
+        Respond with ONLY a valid JSON object (no markdown, no extra text, no code fences) with exactly these five keys. Each value must be a structured JSON object or array, NOT plain text strings:
 
         {
-          "overview": "2 paragraphs. First: introduce the song's emotional character and mood — what it feels like to play and what makes it satisfying for a beginner. Second: explain the key and tempo in practical terms (e.g. 'the key of C major means you will be working mostly with the white keys') and what the time signature means for how you count while playing.",
-          "song_map": "2 paragraphs acting as a roadmap through the song. First: walk through the chord sections in order — name each section, describe which chords appear and whether they repeat, and tell the student what to expect moment to moment. Second: point out the single biggest structural thing to notice (e.g. a repeating pattern, a turnaround, a section that comes back) and explain why recognising it makes the whole song easier to remember and play.",
-          "hand_positions": "2 paragraphs. First: describe exactly where the left hand sits on the keyboard, what it plays (e.g. bass notes, chords, arpeggios), and give one named practice drill to build that hand's independence — include a target BPM and a clear goal. Second: do the same for the right hand — where it sits, what it plays, and one named practice drill. End with one sentence about the key coordination tip for bringing the two hands together.",
-          "difficult_sections": "2 paragraphs, each covering one hard section from the difficulty data. For each: name the section and describe in plain words exactly what makes it tricky (e.g. 'your fingers need to jump quickly from one position to another'). Then give a specific, named practice method with a concrete starting BPM and a clear milestone to hit before moving on.",
-          "harmony": "2 paragraphs. First: explain what each chord in the progression is doing emotionally — describe each one in one short phrase (e.g. 'home and settled', 'a little uncertain', 'the emotional peak') so the student understands the story the chords are telling. Second: give practical dynamics guidance tied to the song's sections — describe when to play softer and when to play louder, and explain in plain terms why that contrast makes the music come alive."
+          "overview": {
+            "mood": "One sentence describing the emotional character and feel of this piece",
+            "key_insight": "One sentence explaining what the key signature means practically (e.g. which keys to use)",
+            "tempo_insight": "One sentence explaining the tempo in relatable terms (e.g. 'a comfortable walking pace')",
+            "time_insight": "One sentence explaining the time signature (e.g. 'count 1-2-3-4 steadily')",
+            "estimated_practice_time": "Estimated hours to learn this piece (e.g. '2-3 hours')",
+            "key_takeaway": "The single most important thing for a beginner to know about this piece",
+            "body": "2 concise paragraphs: first about the song's emotional character and what makes it satisfying, second about practical key/tempo/time signature guidance."
+          },
+          "song_map": [
+            {"section": "Letter or name", "beats": "start-end", "chords": "Chord names used", "description": "One sentence describing what happens musically"},
+            ...repeat for each distinct section
+          ],
+          "hand_positions": {
+            "right": {"position": "Note range (e.g. C4-G4)", "role": "What this hand plays (e.g. Melody)", "drill": "Named practice drill", "target_bpm": integer},
+            "left": {"position": "Note range (e.g. C3-G3)", "role": "What this hand plays (e.g. Bass notes)", "drill": "Named practice drill", "target_bpm": integer},
+            "coordination_tip": "One sentence on how to bring both hands together"
+          },
+          "difficult_sections": [
+            {"name": "Section name or description", "beats": "start-end", "challenge": "What makes it hard in plain words", "method": "Named practice method", "start_bpm": integer, "milestone": "Clear goal to hit before moving on"},
+            ...repeat for each challenging section (at least 2)
+          ],
+          "harmony": {
+            "chord_emotions": [
+              {"chord": "Chord name", "emotion": "2-4 word feel (e.g. 'home and settled', 'gentle warmth', 'rising tension')"},
+              ...repeat for each chord in the progression
+            ],
+            "dynamics_guidance": "2-3 sentences about when to play softer/louder and why the contrast matters"
+          }
         }
       PROMPT
     end
@@ -106,8 +130,8 @@ module AI
       return nil if content.blank?
 
       JSON.parse(content)
-    rescue JSON::ParserError
-      Rails.logger.error("[AI::SongOverviewGenerator] Failed to parse Claude response: #{content.truncate(200)}")
+    rescue JSON::ParserError => e
+      Rails.logger.error("[AI::SongOverviewGenerator] Failed to parse Claude response: #{e.message} — content length: #{content.length}, last 100 chars: #{content.last(100)}")
       nil
     end
   end

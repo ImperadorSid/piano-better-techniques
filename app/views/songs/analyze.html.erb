@@ -4,13 +4,39 @@
   <%= link_to "← Back to Song", song_path(@song), style: "color:#666688;text-decoration:none;font-size:0.9rem;font-family:'Space Grotesk',sans-serif;" %>
 </div>
 
-<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
-  <h1 style="margin:0;font-size:2rem;font-weight:800;letter-spacing:-0.02em;"><%= @song.title %> <span style="color:#666688;font-weight:400;">— Analysis</span></h1>
+<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+  <div>
+    <h1 style="margin:0;font-size:2rem;font-weight:800;letter-spacing:-0.02em;"><%= @song.title %></h1>
+    <p style="color:#a0a0cc;margin:4px 0 0;"><%= @song.composer.presence || "Unknown composer" %></p>
+  </div>
   <% if @song_analysis && @song_analysis.ai_generated? %>
     <%= button_to "REGENERATE", regenerate_song_path(@song), method: :post, class: "neon-btn-primary", style: "white-space:nowrap;padding:8px 20px;font-size:0.85rem;" %>
   <% end %>
 </div>
-<p style="color:#a0a0cc;margin:0 0 32px;"><%= @song.composer.presence || "Unknown composer" %></p>
+
+<%# Hero Stats Row %>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:24px 0 32px;">
+  <div class="neon-card" style="text-align:center;padding:16px;">
+    <div style="font-size:1.6rem;font-weight:700;color:#00f0ff;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 8px rgba(0,240,255,0.3);"><%= @song.tempo_bpm %></div>
+    <div style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-top:2px;">BPM</div>
+  </div>
+  <div class="neon-card" style="text-align:center;padding:16px;">
+    <div style="font-size:1.6rem;font-weight:700;color:#ff00ff;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 8px rgba(255,0,255,0.3);"><%= @song.key_signature %></div>
+    <div style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-top:2px;">Key</div>
+  </div>
+  <div class="neon-card" style="text-align:center;padding:16px;">
+    <div style="font-size:1.6rem;font-weight:700;color:#39ff14;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 8px rgba(57,255,20,0.3);"><%= @song.time_signature %></div>
+    <div style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-top:2px;">Time</div>
+  </div>
+  <div class="neon-card" style="text-align:center;padding:16px;">
+    <div style="font-size:1.6rem;font-weight:700;color:#ffff00;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 8px rgba(255,255,0,0.3);"><%= @song.difficulty %>/5</div>
+    <div style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-top:2px;">Difficulty</div>
+  </div>
+  <div class="neon-card" style="text-align:center;padding:16px;">
+    <div style="font-size:1.6rem;font-weight:700;color:#00f0ff;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 8px rgba(0,240,255,0.3);"><%= @song.song_parts.sum(&:note_count) %></div>
+    <div style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-top:2px;">Total Notes</div>
+  </div>
+</div>
 
 <% if @song_analysis.nil? %>
   <div class="neon-card" style="padding:40px;text-align:center;">
@@ -18,81 +44,69 @@
   </div>
 <% else %>
 
-  <%# ── AI-Generated Overview ─────────────────────────────────────────────── %>
+  <%# AI-Generated Content %>
   <%= turbo_stream_from "song_overview_#{@song.id}" %>
   <div id="ai_overview">
     <%= render "ai_overview", song_analysis: @song_analysis %>
   </div>
 
-  <%# ── Structured Data ────────────────────────────────────────────────────── %>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;">
-
-    <%# Chord Progression %>
-    <div class="neon-card">
-      <h3 style="margin:0 0 16px;color:#a0a0cc;font-size:1rem;text-transform:uppercase;letter-spacing:0.08em;">Chord Progression</h3>
-      <% if @song_analysis.chord_progressions.any? %>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          <% @song_analysis.chord_progressions.each do |chord| %>
-            <div style="background:#1a1a2e;border:1px solid #ff00ff33;border-radius:6px;padding:10px 14px;text-align:center;">
-              <div style="color:#ff44cc;font-size:1.1rem;font-weight:bold;font-family:'Space Grotesk',sans-serif;"><%= chord["chord"] %></div>
-              <div style="color:#666688;font-size:0.7rem;font-family:'Space Grotesk',sans-serif;">Beat <%= chord["beat"] %></div>
-              <div style="color:#666688;font-size:0.7rem;"><%= chord["quality"] %></div>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <p style="color:#666688;">No chord data available.</p>
-      <% end %>
-    </div>
-
-    <%# Difficulty Sections %>
-    <div class="neon-card">
-      <h3 style="margin:0 0 16px;color:#a0a0cc;font-size:1rem;text-transform:uppercase;letter-spacing:0.08em;">Difficulty Sections</h3>
-      <% if @song_analysis.difficulty_sections.any? %>
-        <% colors = ["rgba(57,255,20,0.12)", "rgba(255,255,0,0.1)", "rgba(255,140,0,0.1)", "rgba(255,34,85,0.1)", "rgba(255,0,255,0.1)"] %>
-        <% borders = ["rgba(57,255,20,0.3)", "rgba(255,255,0,0.3)", "rgba(255,140,0,0.3)", "rgba(255,34,85,0.3)", "rgba(255,0,255,0.3)"] %>
-        <% text_colors = ["#39ff14", "#ffff00", "#ff8c00", "#ff2255", "#ff00ff"] %>
+  <%# Difficulty Chart %>
+  <% if @song_analysis.difficulty_sections.any? %>
+    <div class="neon-card" style="margin-bottom:24px;">
+      <h3 style="margin:0 0 16px;color:#a0a0cc;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;">Difficulty Map</h3>
+      <div style="display:flex;gap:4px;align-items:end;height:80px;">
+        <% colors = ["#39ff14", "#ffff00", "#ff8c00", "#ff2255", "#ff00ff"] %>
         <% @song_analysis.difficulty_sections.each do |section| %>
           <% level = section["level"].to_i %>
-          <div style="background:<%= colors[level - 1] || '#1a1a2e' %>;border:1px solid <%= borders[level - 1] || '#2a2a44' %>;border-radius:6px;padding:10px 14px;margin-bottom:8px;">
-            <div style="color:#e0e0ff;font-weight:600;font-family:'Space Grotesk',sans-serif;"><%= section["label"] %></div>
-            <div style="color:#a0a0cc;font-size:0.85rem;">
-              Beats <%= section["start_beat"] %> – <%= section["end_beat"] %> ·
-              <span style="color:<%= text_colors[level - 1] || '#a0a0cc' %>;font-weight:600;">Level <%= level %>/5</span>
-            </div>
+          <% height_pct = level * 20 %>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div style="width:100%;height:<%= height_pct %>px;background:<%= colors[level - 1] %>;border-radius:4px 4px 0 0;opacity:0.8;box-shadow:0 0 6px <%= colors[level - 1] %>44;"></div>
+            <span style="color:#666688;font-size:0.65rem;font-family:'Space Grotesk',sans-serif;text-transform:uppercase;"><%= section["label"] %></span>
           </div>
         <% end %>
-      <% else %>
-        <p style="color:#666688;">No section data available.</p>
-      <% end %>
+      </div>
     </div>
+  <% end %>
 
-  </div>
+  <%# Chord Progression %>
+  <% if @song_analysis.chord_progressions.any? %>
+    <div class="neon-card" style="margin-bottom:24px;">
+      <h3 style="margin:0 0 16px;color:#a0a0cc;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;">Chord Progression</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <% @song_analysis.chord_progressions.each do |chord| %>
+          <div style="background:#1a1a2e;border:1px solid #ff00ff33;border-radius:6px;padding:8px 14px;text-align:center;min-width:60px;">
+            <div style="color:#ff44cc;font-size:1rem;font-weight:700;font-family:'Space Grotesk',sans-serif;"><%= chord["chord"] %></div>
+            <div style="color:#666688;font-size:0.65rem;font-family:'Space Grotesk',sans-serif;margin-top:2px;"><%= chord["quality"] %></div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 
-  <%# Dynamics %>
-  <div class="neon-card" style="margin-bottom:24px;">
-    <h3 style="margin:0 0 16px;color:#a0a0cc;font-size:1rem;text-transform:uppercase;letter-spacing:0.08em;">Dynamics Map</h3>
-    <% if @song_analysis.dynamics_map.any? %>
+  <%# Dynamics Map %>
+  <% if @song_analysis.dynamics_map.any? %>
+    <div class="neon-card" style="margin-bottom:24px;">
+      <h3 style="margin:0 0 16px;color:#a0a0cc;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;">Dynamics</h3>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
         <% @song_analysis.dynamics_map.each do |dyn| %>
-          <span style="background:rgba(57,255,20,0.08);border:1px solid rgba(57,255,20,0.2);color:#39ff14;padding:6px 12px;border-radius:4px;font-size:0.85rem;font-family:'Space Grotesk',sans-serif;">
-            <strong><%= dyn["marking"] %></strong>
-            <span style="color:#666688;font-size:0.75rem;margin-left:6px;">beat <%= dyn["beat"] %> · vel <%= dyn["velocity_avg"] %></span>
+          <% vel = dyn["velocity_avg"].to_i %>
+          <% color = vel >= 85 ? "#ff2255" : vel >= 43 ? "#ffff00" : "#39ff14" %>
+          <span style="background:rgba(255,255,255,0.03);border:1px solid <%= color %>33;color:<%= color %>;padding:6px 12px;border-radius:4px;font-size:0.8rem;font-family:'Space Grotesk',sans-serif;font-weight:600;">
+            <%= dyn["marking"] %>
+            <span style="color:#666688;font-weight:400;margin-left:4px;font-size:0.7rem;">b<%= dyn["beat"] %></span>
           </span>
         <% end %>
       </div>
-    <% else %>
-      <p style="color:#666688;">No dynamics data available.</p>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
 
   <%# Hand Separation %>
   <% if @song_analysis.hand_separation.any? %>
-    <div class="neon-card">
-      <h3 style="margin:0 0 12px;color:#a0a0cc;font-size:1rem;text-transform:uppercase;letter-spacing:0.08em;">Hand Separation</h3>
+    <div class="neon-card" style="margin-bottom:24px;">
+      <h3 style="margin:0 0 12px;color:#a0a0cc;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;">Hand Separation</h3>
       <p style="color:#a0a0cc;margin:0;font-size:0.9rem;">
-        Split point: <span style="color:#00f0ff;font-weight:600;font-family:'Space Grotesk',sans-serif;">MIDI <%= @song_analysis.hand_separation["split_midi"] %></span>
-        <span style="color:#666688;">(<%= @song_analysis.hand_separation["method"]&.humanize %>)</span>
+        Split at <span style="color:#00f0ff;font-weight:700;font-family:'Space Grotesk',sans-serif;">MIDI <%= @song_analysis.hand_separation["split_midi"] %></span>
+        <span style="color:#666688;margin-left:8px;">Avg pitch: <%= @song_analysis.hand_separation["avg_pitch"]&.round(1) %></span>
       </p>
     </div>
   <% end %>

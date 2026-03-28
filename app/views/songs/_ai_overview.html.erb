@@ -8,15 +8,151 @@
   </div>
 <% elsif song_analysis.ai_generated? %>
 
-  <% ["Overview", "Song Map", "Hand Positioning", "Difficult Sections", "Harmony & Dynamics"].zip(
-       [song_analysis.ai_overview, song_analysis.ai_song_map, song_analysis.ai_hand_positions, song_analysis.ai_difficult_sections, song_analysis.ai_harmony]
-     ).each do |title, content| %>
-    <section style="margin-bottom:32px;">
-      <h2 style="color:#a0a0cc;margin-bottom:16px;border-bottom:1px solid #2a2a44;padding-bottom:8px;font-size:1.1rem;text-transform:uppercase;letter-spacing:0.06em;"><%= title %></h2>
-      <div class="neon-card" style="color:#a0a0cc;line-height:1.8;white-space:pre-wrap;font-size:0.95rem;">
-        <%= content %>
+  <%# Parse structured JSON from ai_* fields %>
+  <% overview = begin; JSON.parse(song_analysis.ai_overview); rescue; nil; end %>
+  <% song_map = begin; JSON.parse(song_analysis.ai_song_map); rescue; nil; end %>
+  <% hand_pos = begin; JSON.parse(song_analysis.ai_hand_positions); rescue; nil; end %>
+  <% difficult = begin; JSON.parse(song_analysis.ai_difficult_sections); rescue; nil; end %>
+  <% harmony = begin; JSON.parse(song_analysis.ai_harmony); rescue; nil; end %>
+
+  <%# ── Quick Insights ─────────────────────────────────────────────── %>
+  <% if overview.is_a?(Hash) %>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px;">
+      <div class="neon-card" style="padding:16px;">
+        <div style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-bottom:6px;">Mood</div>
+        <div style="color:#ff44cc;font-size:0.95rem;font-weight:500;line-height:1.4;"><%= overview["mood"] %></div>
       </div>
-    </section>
+      <div class="neon-card" style="padding:16px;">
+        <div style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-bottom:6px;">Key Takeaway</div>
+        <div style="color:#00f0ff;font-size:0.95rem;font-weight:500;line-height:1.4;"><%= overview["key_takeaway"] %></div>
+      </div>
+      <div class="neon-card" style="padding:16px;">
+        <div style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Grotesk',sans-serif;margin-bottom:6px;">Practice Time</div>
+        <div style="font-size:1.8rem;font-weight:800;color:#39ff14;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 8px rgba(57,255,20,0.3);"><%= overview["estimated_practice_time"] %></div>
+      </div>
+    </div>
+
+    <%# Insight pills %>
+    <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+      <% [["🎵", overview["key_insight"], "#00f0ff"], ["⏱️", overview["tempo_insight"], "#ff00ff"], ["🎶", overview["time_insight"], "#39ff14"]].each do |icon, text, color| %>
+        <% if text.present? %>
+          <div style="flex:1;min-width:200px;background:rgba(255,255,255,0.02);border:1px solid #2a2a44;border-radius:8px;padding:12px 16px;display:flex;align-items:start;gap:10px;">
+            <span style="font-size:1.2rem;"><%= icon %></span>
+            <span style="color:#a0a0cc;font-size:0.85rem;line-height:1.5;"><%= text %></span>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+
+    <%# Body text %>
+    <% if overview["body"].present? %>
+      <div class="neon-card" style="margin-bottom:24px;color:#a0a0cc;line-height:1.8;font-size:0.95rem;white-space:pre-wrap;"><%= overview["body"] %></div>
+    <% end %>
+  <% end %>
+
+  <%# ── Song Map ───────────────────────────────────────────────────── %>
+  <% if song_map.is_a?(Array) && song_map.any? %>
+    <h3 style="color:#a0a0cc;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 12px;">Song Structure</h3>
+    <div class="neon-card" style="margin-bottom:24px;padding:0;overflow:hidden;">
+      <% section_colors = ["#00f0ff", "#ff00ff", "#39ff14", "#ffff00", "#ff8c00", "#ff2255"] %>
+      <% song_map.each_with_index do |section, i| %>
+        <div style="display:flex;align-items:start;border-bottom:1px solid #1a1a2e;padding:14px 20px;gap:16px;">
+          <div style="min-width:64px;padding:8px 10px;border-radius:6px;background:<%= section_colors[i % section_colors.size] %>18;border:1px solid <%= section_colors[i % section_colors.size] %>44;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-align:center;">
+            <span style="color:<%= section_colors[i % section_colors.size] %>;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.75rem;line-height:1.3;"><%= section["section"] %></span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="color:#e0e0ff;font-weight:600;font-size:0.9rem;margin-bottom:4px;line-height:1.4;"><%= section["description"] %></div>
+            <div style="display:flex;gap:12px;color:#666688;font-size:0.75rem;font-family:'Space Grotesk',sans-serif;flex-wrap:wrap;">
+              <span>Beats <%= section["beats"] %></span>
+              <span style="color:<%= section_colors[i % section_colors.size] %>;"><%= section["chords"] %></span>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# ── Hand Positions ─────────────────────────────────────────────── %>
+  <% if hand_pos.is_a?(Hash) %>
+    <h3 style="color:#a0a0cc;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 12px;">Hand Positions</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <% [["right", "Right Hand", "#00f0ff", "👉"], ["left", "Left Hand", "#ff00ff", "👈"]].each do |key, label, color, icon| %>
+        <% hand = hand_pos[key] %>
+        <% if hand.is_a?(Hash) %>
+          <div class="neon-card" style="padding:20px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+              <span style="font-size:1.2rem;"><%= icon %></span>
+              <span style="color:<%= color %>;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.9rem;text-transform:uppercase;letter-spacing:0.05em;"><%= label %></span>
+            </div>
+            <div style="margin-bottom:12px;">
+              <span style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;font-family:'Space Grotesk',sans-serif;">Position</span>
+              <div style="color:#e0e0ff;font-size:1rem;font-weight:600;margin-top:2px;"><%= hand["position"] %></div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <span style="color:#666688;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;font-family:'Space Grotesk',sans-serif;">Role</span>
+              <div style="color:#a0a0cc;font-size:0.9rem;margin-top:2px;"><%= hand["role"] %></div>
+            </div>
+            <div style="background:#0a0a1a;border:1px solid #2a2a44;border-radius:6px;padding:12px;">
+              <div style="margin-bottom:8px;color:#e0e0ff;font-weight:600;font-size:0.85rem;line-height:1.4;"><%= hand["drill"] %></div>
+              <div>
+                <span style="background:<%= color %>18;color:<%= color %>;padding:3px 10px;border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.8rem;font-weight:700;"><%= hand["target_bpm"] %> BPM</span>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+    <% if hand_pos["coordination_tip"].present? %>
+      <div style="background:rgba(255,255,0,0.04);border:1px solid rgba(255,255,0,0.15);border-radius:8px;padding:12px 16px;margin-bottom:24px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.1rem;">💡</span>
+        <span style="color:#ffff00;font-size:0.9rem;"><%= hand_pos["coordination_tip"] %></span>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%# ── Challenges ─────────────────────────────────────────────────── %>
+  <% if difficult.is_a?(Array) && difficult.any? %>
+    <h3 style="color:#a0a0cc;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 12px;">Challenges</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+      <% difficult.each do |section| %>
+        <div class="neon-card" style="padding:20px;">
+          <div style="margin-bottom:10px;">
+            <div style="color:#ff2255;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:2px;"><%= section["name"] %></div>
+            <% if section["beats"].present? %>
+              <span style="color:#666688;font-size:0.7rem;font-family:'Space Grotesk',sans-serif;">Beats <%= section["beats"] %></span>
+            <% end %>
+          </div>
+          <p style="color:#a0a0cc;font-size:0.85rem;margin:0 0 12px;line-height:1.5;"><%= section["challenge"] %></p>
+          <div style="background:#0a0a1a;border:1px solid #2a2a44;border-radius:6px;padding:12px;">
+            <div style="margin-bottom:8px;color:#e0e0ff;font-weight:600;font-size:0.85rem;line-height:1.4;"><%= section["method"] %></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+              <span style="background:rgba(255,34,85,0.12);color:#ff2255;padding:3px 10px;border-radius:4px;font-family:'Space Grotesk',sans-serif;font-size:0.8rem;font-weight:700;white-space:nowrap;">Start: <%= section["start_bpm"] %> BPM</span>
+              <span style="color:#666688;font-size:0.8rem;">🎯 <%= section["milestone"] %></span>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# ── Harmony & Dynamics ─────────────────────────────────────────── %>
+  <% if harmony.is_a?(Hash) %>
+    <h3 style="color:#a0a0cc;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 12px;">Harmony & Feel</h3>
+    <div class="neon-card" style="margin-bottom:24px;">
+      <% if harmony["chord_emotions"].is_a?(Array) %>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+          <% harmony["chord_emotions"].each do |ce| %>
+            <div style="background:#1a1a2e;border:1px solid #ff00ff33;border-radius:8px;padding:10px 16px;text-align:center;">
+              <div style="color:#ff44cc;font-size:1.1rem;font-weight:700;font-family:'Space Grotesk',sans-serif;"><%= ce["chord"] %></div>
+              <div style="color:#a0a0cc;font-size:0.75rem;margin-top:4px;"><%= ce["emotion"].to_s.split("—").first.strip %></div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+      <% if harmony["dynamics_guidance"].present? %>
+        <p style="color:#a0a0cc;font-size:0.9rem;margin:0;line-height:1.7;border-top:1px solid #2a2a44;padding-top:14px;"><%= harmony["dynamics_guidance"] %></p>
+      <% end %>
+    </div>
   <% end %>
 
   <hr style="border-color:#2a2a44;margin-bottom:32px;">

@@ -79,11 +79,11 @@ RSpec.describe "Songs", type: :request do
     context "when AI analysis is already generated" do
       before do
         song.song_analysis.update!(
-          ai_overview: "Test overview",
-          ai_song_map: "Test song map",
-          ai_hand_positions: "Test hand positions",
-          ai_difficult_sections: "Test difficult sections",
-          ai_harmony: "Test harmony"
+          ai_overview: { mood: "Cheerful", key_insight: "C major", tempo_insight: "Walking pace", time_insight: "Count 1-2-3-4", estimated_practice_time: "2 hours", key_takeaway: "Simple patterns", body: "Test overview body" }.to_json,
+          ai_song_map: [{ section: "A", beats: "0-16", chords: "C-G", description: "Main melody section" }].to_json,
+          ai_hand_positions: { right: { position: "C4-G4", role: "Melody", drill: "Finger Walk", target_bpm: 80 }, left: { position: "C3-G3", role: "Bass", drill: "Root Hold", target_bpm: 60 }, coordination_tip: "Hands together" }.to_json,
+          ai_difficult_sections: [{ name: "Chord change", beats: "12-16", challenge: "Quick jump", method: "Slow Motion", start_bpm: 50, milestone: "3 times clean" }].to_json,
+          ai_harmony: { chord_emotions: [{ chord: "C", emotion: "Home" }], dynamics_guidance: "Medium volume throughout" }.to_json
         )
       end
 
@@ -100,11 +100,11 @@ RSpec.describe "Songs", type: :request do
 
       it "shows the AI content sections" do
         get analyze_song_path(song)
-        expect(response.body).to include("Test overview")
-        expect(response.body).to include("Test song map")
-        expect(response.body).to include("Test hand positions")
-        expect(response.body).to include("Test difficult sections")
-        expect(response.body).to include("Test harmony")
+        expect(response.body).to include("Cheerful")
+        expect(response.body).to include("Main melody section")
+        expect(response.body).to include("Finger Walk")
+        expect(response.body).to include("Slow Motion")
+        expect(response.body).to include("Medium volume")
       end
 
       it "does not show the loading banner" do
