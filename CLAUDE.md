@@ -226,6 +226,74 @@ If a Chrome MCP tool call fails with _"The browser is already running"_ or _"alr
 
 ---
 
+## Anti-Patterns (Don'ts)
+
+- **Don't generate pending/empty test specs.** Either write full tests with assertions or skip the file entirely. Placeholder specs create a false sense of coverage.
+- **Don't write smoke-test-only request specs.** Every controller action that computes data (stats, averages, queries) must have tests verifying the computed values, not just HTTP 200.
+- **Don't call AI services synchronously from controllers.** Always use `perform_later` via a background job and broadcast results via Turbo Streams.
+- **Don't use raw `Net::HTTP`.** Use Faraday with retry middleware and explicit timeouts (`timeout` and `open_timeout`).
+- **Don't skip testing AI status query methods** (`ai_generated?`, `ai_pending?`, `ai_failed?`) when adding new states or modifying status logic.
+- **Don't modify the AI prompt** without testing the full generate-parse-store cycle. The prompt produces structured JSON — changes can break parsing.
+- **Don't add Stimulus controllers that bypass the event system.** Use custom events dispatched on `document` for inter-controller communication (see Frontend Architecture below).
+
+---
+
+## Frontend Architecture
+
+### Stimulus Inter-Controller Communication
+
+Controllers communicate via **custom events dispatched on `document`**. This is the only sanctioned pattern — never import or reference another controller directly.
+
+| Event | Dispatched By | Consumed By | Payload |
+|---|---|---|---|
+| `midi:noteon` | `midi_controller` | `practice_controller`, `keyboard_controller` | `{ note, velocity }` |
+| `midi:noteoff` | `midi_controller` | `keyboard_controller` | `{ note }` |
+
+### Keyboard State Machine
+
+`keyboard_controller` manages a 61-key virtual piano (C2–C7). Keys flash green (correct) or red (incorrect) then reset after 300ms. State is purely visual — no scoring logic lives here.
+
+### MIDI Data Flow
+
+```
+Physical MIDI Keyboard
+  → WebMIDI API (browser)
+    → midi_controller (Stimulus): parses raw MIDI bytes
+      → dispatches midi:noteon / midi:noteoff on document
+        → practice_controller: evaluates timing, records SessionAttempt
+        → keyboard_controller: visual feedback on virtual keys
+```
+
+### Staff Rendering
+
+`staff_controller` uses VexFlow 5.0 to render 3 measures at a time as SVG. The playhead is a red vertical line animated via `requestAnimationFrame`. When the playhead crosses the boundary of the current 3-measure page, the staff auto-scrolls to the next page. Note coloring: dark (#333) = not yet reached, green (#4CAF50) = correct, red (#f44336) = missed/incorrect.
+
+---
+
+## Error Handling Patterns
+
+- **Services** return `nil` on failure (never raise). Callers must handle `nil` gracefully.
+- **Jobs** rescue exceptions, log them, set `ai_status: "failed"`, and broadcast a failure Turbo Stream. They never re-raise.
+- **AI::SongOverviewGenerator** returns `nil` if: API key missing, no analysis record, API call fails, or JSON parsing fails. Each failure path is silent (logged, not raised).
+- **Controllers** rely on ActiveRecord validations for user input. Service failures result in a flash or empty state, never a 500.
+
+---
+
+## CI Pipeline
+
+CI is defined in `.github/workflows/ci.yml` and runs on push to `main` and on pull requests.
+
+| Job | What it runs |
+|---|---|
+| `scan_ruby` | Brakeman + Bundler Audit |
+| `scan_js` | Importmap audit |
+| `lint` | RuboCop |
+| `test` | `bundle exec rspec` (Ruby) + `npx vitest run` (JavaScript) |
+
+Both RSpec and Vitest must pass before merging.
+
+---
+
 ## UI Theme
 
 - **Background:** #111 / #1a1a2e (dark)
