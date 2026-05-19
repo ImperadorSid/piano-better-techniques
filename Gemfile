@@ -41,7 +41,7 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 
 # HTTP client for Claude API calls
-gem "faraday", "~> 2.0"
+gem "faraday", "~> 2.14"
 gem "faraday-retry"
 
 group :development, :test do
