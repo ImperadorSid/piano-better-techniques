@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A Rails 8.1 app that helps beginners learn piano through AI-generated song guides, MIDI keyboard practice, and progress tracking. The AI layer calls the Claude API (`claude-sonnet-4-6`) to produce structured study content (overview, song map, hand positioning, difficult sections, harmony) for each song.
+A Rails 8.1 app that helps beginners learn piano through AI-generated song guides, MIDI keyboard practice, and progress tracking. The AI layer calls the Claude API (`claude-sonnet-5-5`) to produce structured study content (overview, song map, hand positioning, difficult sections, harmony) for each song.
 
 **Stack:** Ruby on Rails 8.1 · SQLite · Solid Queue / Cable / Cache · Hotwire (Turbo + Stimulus) · Importmap · VexFlow 5.0 · Chart.js 4 · Vitest · RSpec · Claude API (Anthropic)
 

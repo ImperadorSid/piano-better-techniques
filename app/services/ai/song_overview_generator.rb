@@ -1,11 +1,14 @@
 module AI
   # Calls the Claude API to generate a structured, beginner-friendly analysis of a song.
-  # Uses tool_use (structured output) to guarantee valid JSON conforming to the expected schema.
+  # Uses a strict tool (structured output) to guarantee valid JSON conforming to the expected schema.
   # Returns structured JSON stored in the five ai_* text fields on SongAnalysis.
   # Skips silently if ANTHROPIC_API_KEY is not set.
   class SongOverviewGenerator
     ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
-    MODEL = "claude-sonnet-4-6"
+    MODEL = "claude-sonnet-5-5"
+    API_VERSION = "2023-06-01"
+    # Re-runs a safety-classifier refusal on Anthropic's recommended fallback model.
+    FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
     def initialize(song)
       @song = song
@@ -49,9 +52,14 @@ module AI
     def build_payload
       {
         model: MODEL,
-        max_tokens: 4096,
+        # Adaptive thinking counts toward max_tokens.
+        max_tokens: 16_000,
+        # Low effort keeps thinking (most of the output cost) short.
+        output_config: { effort: "low" },
         tools: [ tool_definition ],
-        tool_choice: { type: "tool", name: "song_analysis" },
+        # Forced tool_choice is rejected by this model; the prompt and strict schema steer the tool call.
+        tool_choice: { type: "auto" },
+        fallbacks: "default",
         messages: [
           { role: "user", content: prompt }
         ]
@@ -62,12 +70,15 @@ module AI
       {
         name: "song_analysis",
         description: "Store a structured, beginner-friendly analysis of a piano song.",
+        strict: true,
         input_schema: {
           type: "object",
+          additionalProperties: false,
           required: %w[overview song_map hand_positions difficult_sections harmony],
           properties: {
             overview: {
               type: "object",
+              additionalProperties: false,
               required: %w[mood key_insight tempo_insight time_insight estimated_practice_time key_takeaway body],
               properties: {
                 mood: { type: "string", description: "One sentence describing the emotional character" },
@@ -83,6 +94,7 @@ module AI
               type: "array",
               items: {
                 type: "object",
+                additionalProperties: false,
                 required: %w[section beats chords description],
                 properties: {
                   section: { type: "string" },
@@ -94,10 +106,12 @@ module AI
             },
             hand_positions: {
               type: "object",
+              additionalProperties: false,
               required: %w[right left coordination_tip],
               properties: {
                 right: {
                   type: "object",
+                  additionalProperties: false,
                   required: %w[position role drill target_bpm],
                   properties: {
                     position: { type: "string" },
@@ -108,6 +122,7 @@ module AI
                 },
                 left: {
                   type: "object",
+                  additionalProperties: false,
                   required: %w[position role drill target_bpm],
                   properties: {
                     position: { type: "string" },
@@ -123,6 +138,7 @@ module AI
               type: "array",
               items: {
                 type: "object",
+                additionalProperties: false,
                 required: %w[name beats challenge method start_bpm milestone],
                 properties: {
                   name: { type: "string" },
@@ -136,12 +152,14 @@ module AI
             },
             harmony: {
               type: "object",
+              additionalProperties: false,
               required: %w[chord_emotions dynamics_guidance],
               properties: {
                 chord_emotions: {
                   type: "array",
                   items: {
                     type: "object",
+                    additionalProperties: false,
                     required: %w[chord emotion],
                     properties: {
                       chord: { type: "string" },
@@ -195,18 +213,30 @@ module AI
 
       conn.post do |req|
         req.headers["x-api-key"] = api_key
-        req.headers["anthropic-version"] = "2024-10-22"
+        req.headers["anthropic-version"] = API_VERSION
+        req.headers["anthropic-beta"] = FALLBACK_BETA
         req.headers["content-type"] = "application/json"
-        req.options.timeout = 60
+        req.options.timeout = 180
         req.options.open_timeout = 10
         req.body = payload
       end
     end
 
     def parse_response(response)
-      return nil unless response.success?
+      unless response.success?
+        Rails.logger.error(
+          "[AI::SongOverviewGenerator] Claude API request failed for song #{@song.id}: " \
+          "status=#{response.status}, error=#{response.body.is_a?(Hash) ? response.body["error"] : response.body}"
+        )
+        return nil
+      end
 
       log_token_usage(response)
+
+      if response.body["stop_reason"] == "max_tokens"
+        Rails.logger.error("[AI::SongOverviewGenerator] Claude response for song #{@song.id} was truncated at max_tokens")
+        return nil
+      end
 
       tool_block = response.body.dig("content")&.find { |b| b["type"] == "tool_use" }
       return nil unless tool_block

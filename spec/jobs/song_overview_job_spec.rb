@@ -20,7 +20,7 @@ RSpec.describe SongOverviewJob do
   end
 
   let(:failed_response) do
-    double(success?: false, body: { "error" => "Unauthorized" })
+    double(success?: false, status: 401, body: { "error" => "Unauthorized" })
   end
 
   around do |example|

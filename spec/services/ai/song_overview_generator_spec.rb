@@ -46,7 +46,7 @@ RSpec.describe AI::SongOverviewGenerator do
   end
 
   let(:failed_response) do
-    double(success?: false, body: { "error" => "Unauthorized" })
+    double(success?: false, status: 401, body: { "error" => { "type" => "authentication_error", "message" => "invalid x-api-key" } })
   end
 
   around do |example|
@@ -146,6 +146,52 @@ RSpec.describe AI::SongOverviewGenerator do
         generator.generate!
         expect(song.song_analysis.reload.ai_overview).to be_nil
       end
+
+      it "logs the HTTP status and API error" do
+        expect(Rails.logger).to receive(:error).with(/request failed for song #{song.id}: status=401.*authentication_error.*invalid x-api-key/)
+        generator.generate!
+      end
+    end
+
+    context "when the API returns a non-JSON error body" do
+      before do
+        allow_any_instance_of(Faraday::Connection).to receive(:post)
+          .and_return(double(success?: false, status: 502, body: "Bad Gateway"))
+      end
+
+      it "logs the raw body without raising" do
+        expect(Rails.logger).to receive(:error).with(/status=502, error=Bad Gateway/)
+        expect { generator.generate! }.not_to raise_error
+      end
+    end
+
+    context "when the response was truncated at max_tokens" do
+      let(:truncated_response) do
+        double(
+          success?: true,
+          body: {
+            "stop_reason" => "max_tokens",
+            "content" => [
+              { "type" => "tool_use", "id" => "toolu_123", "name" => "song_analysis", "input" => structured_response.slice("overview") }
+            ],
+            "usage" => { "input_tokens" => 500, "output_tokens" => 16_000 }
+          }
+        )
+      end
+
+      before do
+        allow_any_instance_of(Faraday::Connection).to receive(:post).and_return(truncated_response)
+      end
+
+      it "does not store the partial tool input" do
+        generator.generate!
+        expect(song.song_analysis.reload.ai_overview).to be_nil
+      end
+
+      it "logs the truncation" do
+        expect(Rails.logger).to receive(:error).with(/song #{song.id} was truncated at max_tokens/)
+        generator.generate!
+      end
     end
 
     context "when the API returns no tool_use block" do
@@ -170,6 +216,68 @@ RSpec.describe AI::SongOverviewGenerator do
       it "leaves ai_overview blank" do
         generator.generate!
         expect(song.song_analysis.reload.ai_overview).to be_nil
+      end
+    end
+
+    context "request sent to the API" do
+      let(:request) do
+        Faraday::Request.new(:post, nil, {}, Faraday::Utils::Headers.new, nil, Faraday::RequestOptions.new)
+      end
+
+      before do
+        allow_any_instance_of(Faraday::Connection).to receive(:post) do |_conn, &block|
+          block.call(request)
+          successful_response
+        end
+        generator.generate!
+      end
+
+      it "sends a valid anthropic-version header" do
+        expect(request.headers["anthropic-version"]).to eq("2023-06-01")
+      end
+
+      it "opts into server-side refusal fallbacks" do
+        expect(request.headers["anthropic-beta"]).to eq("server-side-fallback-2026-07-01")
+        expect(request.body[:fallbacks]).to eq("default")
+      end
+
+      it "uses Claude Sonnet 5.5" do
+        expect(request.body[:model]).to eq("claude-sonnet-5-5")
+      end
+
+      it "requests low effort to keep thinking costs down" do
+        expect(request.body[:output_config]).to eq({ effort: "low" })
+      end
+
+      it "leaves room for thinking in max_tokens" do
+        expect(request.body[:max_tokens]).to eq(16_000)
+      end
+
+      it "uses auto tool_choice, since forced tool use is rejected by the model" do
+        expect(request.body[:tool_choice]).to eq({ type: "auto" })
+      end
+
+      it "defines the song_analysis tool as strict" do
+        tool = request.body[:tools].first
+        expect(tool[:name]).to eq("song_analysis")
+        expect(tool[:strict]).to be(true)
+      end
+
+      it "disallows additional properties on every object in the tool schema" do
+        objects = []
+        collect = lambda do |node|
+          case node
+          when Hash
+            objects << node if node[:type] == "object"
+            node.each_value { |v| collect.call(v) }
+          when Array
+            node.each { |v| collect.call(v) }
+          end
+        end
+        collect.call(request.body[:tools].first[:input_schema])
+
+        expect(objects.size).to eq(9)
+        expect(objects).to all(include(additionalProperties: false))
       end
     end
 
